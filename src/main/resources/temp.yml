@@ -1,0 +1,42 @@
+spring:
+  datasource:
+    url: jdbc:oracle:thin:@localhost:1521:orcl
+    username: username
+    password: password
+    driverClassName: oracle.jdbc.driver.OracleDriver
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+
+api:
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: username
+    password: password
+    smtp_auth: true
+    smtp_starttls_enable: true
+  datasource:
+    url: jdbc:oracle:thin:@localhost:1521:orcl
+    username: username
+    password: password
+    driverClassName: oracle.jdbc.driver.OracleDriver
+  proxy:
+    host: host
+    port: port
+    username: username
+    password: password
+  path:
+    templete_path: D:\pleiades\templete\
+    output_path: D:\pleiades\output\
+
+# SQLログ出力
+logging:
+  level:
+    org:
+      springframework: warn
+    com:
+      example:
+        demo:
+          UserDataMapper: debug
