@@ -2,27 +2,21 @@ package common.thspot;
 
 public class ThspotMikomiBean {
 
-	public int line;
-	public String id;
-	public String code3;
-	public String torihikisaki;
-	public String bunrui;
-	public String yotei;
-	public String suryo;
-	public String tanka;
-	public String kingaku;
+	public String data[];
 
-	public String getDataTsv() {
-		return this.line + "\t"
-				+ this.id + "\t"
-				+ this.code3 + "\t"
-				+ this.torihikisaki + "\t"
-				+ this.bunrui + "\t"
-				+ this.yotei + "\t"
-				+ this.suryo + "\t"
-				+ this.tanka + "\t"
-				+ this.kingaku + "\t"
-				+ this.suryo + "\r\n";
+	ThspotMikomiBean(int colNum) {
+		data = new String[colNum];
 	}
+	
+	//タブ区切り1行文字列を作成
+	public String getDataTsv() {
+		String retStr = "";
 
+		for (int c=0; c<data.length-1; c++) {
+			retStr = retStr + data[c] + "\t";
+		}
+		retStr = retStr + data[data.length-1] + "\r\n";
+
+		return retStr;
+	}
 }

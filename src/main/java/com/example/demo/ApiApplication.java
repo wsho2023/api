@@ -1,6 +1,7 @@
 package com.example.demo;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,17 +38,18 @@ public class ApiApplication extends SpringBootServletInitializer {
 
     @PostMapping("kkk")
     public String kkkPost(@RequestParam("obj") String obj) {
+		String sysName = "kkk";
+		String objFile = "";
 		String mailBody = "";
-		System.out.println("/kkk obj: " + obj);
+		System.out.println(sysName + " obj: " + obj);
 		String url = "";
+		String filters = "";
+		String sort = "";
         if (obj == null) {
 			String msg = "Object指定なし";
         	return msg;
-        } else if (obj.equals("daicho") == true) {
-			//curl -X POST "http://localhost:8080/kkk?obj=daicho"
-			url = "http://localhost/api/daicho";
-        } else if (obj.equals("jchzn") == true) {
-			//curl -X POST "http://localhost:8080/kkk?obj=jchzn"
+        } else if (obj.equals("juchzn") == true) {
+			//curl -X POST "http://localhost:8080/kkk?obj=juchzn"
 			url = "http://localhost/api/jchzn";
         } else if (obj.equals("seisan") == true) {
 			//curl -X POST "http://localhost:8080/kkk?obj=seisan"
@@ -67,23 +69,15 @@ public class ApiApplication extends SpringBootServletInitializer {
 		String saveTxtPath = outputPath + obj + ".tsv";
 
 		//---------------------------------------
-        //既存ファイルがあれば削除
-		//---------------------------------------
-        try {
-			MyFiles.existsDelete(saveTxtPath);
-		} catch (IOException e) {
-			e.printStackTrace();
-			String msg = e.getMessage();
-        	return msg;
-		}
-        
-		//---------------------------------------
 		//HTTP request process
 		//---------------------------------------
 		WebApi api = new WebApi();
 		api.setUrl("GET", url);
 		int res = -1;
 		try {
+            //既存ファイルがあれば削除
+			MyFiles.existsDelete(saveTxtPath);
+			//データダウンロード
 			res = api.download(saveTxtPath);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -114,15 +108,15 @@ public class ApiApplication extends SpringBootServletInitializer {
 		//1. Excelに書き出し
 		//---------------------------------------
 		String templePath = config.getPathTempletePath();
-        String defXlsPath = templePath + obj + ".xlsx";
+        String defXlsPath = templePath + objFile + ".xlsx";
         String saveXlsPath = "";
 		if (MyFiles.exists(defXlsPath) != true) {
-			String msg = "  " + obj + "テンプレートファイルが見つかりませんでした";
+			String msg = "  " + objFile + "テンプレートファイルが見つかりませんでした";
 			MyUtils.SystemErrPrint(msg);
-			mailBody = mailBody + "\n" + msg;
+			return msg;
 		} else {
 			//テンプレートから出力ファイル生成
-	        String tmpXlsPath = templePath + obj + "_tmp.xlsx";
+	        String tmpXlsPath = templePath + objFile + "_tmp.xlsx";
 			try {
 				MyFiles.copyOW(defXlsPath, tmpXlsPath);	//上書き
 			} catch (IOException e) {
@@ -133,7 +127,7 @@ public class ApiApplication extends SpringBootServletInitializer {
 			//---------------------------------------
 			//Excelオープン(XLSXのファイル読込)
 			//---------------------------------------
-			MyUtils.SystemLogPrint("  Excelオープン...: " + tmpXlsPath + " 種別: " + obj);
+			MyUtils.SystemLogPrint("  Excelオープン...: " + tmpXlsPath + " 種別: " + objFile);
 			MyExcel xlsx = new MyExcel();
 			try {
 				xlsx.open(tmpXlsPath, null, false);
@@ -155,7 +149,7 @@ public class ApiApplication extends SpringBootServletInitializer {
 				//---------------------------------------
 				//XLSXのファイル保存
 				//---------------------------------------
-				saveXlsPath = outputPath + obj + "_" + MyUtils.getDateStr() +".xlsx";
+				saveXlsPath = outputPath + objFile + "_" + MyUtils.getDateStr() +".xlsx";
 				MyUtils.SystemLogPrint("  XLSXファイル保存: " + saveXlsPath);
 				xlsx.save(saveXlsPath);
 				xlsx.close();
@@ -169,16 +163,16 @@ public class ApiApplication extends SpringBootServletInitializer {
 		//---------------------------------------
 		//メール本文作成
 		//---------------------------------------
-		if (obj.equals("daicho") == true) {
+		if (obj.equals("seisan") == true) {
 	        if (maxRow > 1) {
-				//index:8
+				int colIdex = 28;
 				String code;
 				String name;
 				ArrayList<ClassMstInfo> classMstList = new ArrayList<ClassMstInfo>();
 	        	boolean matching = false;
 		        for (int rowIdx=1; rowIdx<maxRow; rowIdx++) {
-		        	code = list.get(rowIdx).get(8);
-		        	name = list.get(rowIdx).get(8);
+		        	code = list.get(rowIdx).get(colIdex);
+		        	name = list.get(rowIdx).get(colIdex+1);
         			matching  = false;
 		        	for (ClassMstInfo cm : classMstList) {
 		        		if (cm.code.equals(code) == true) {
@@ -192,7 +186,7 @@ public class ApiApplication extends SpringBootServletInitializer {
 		        	}
 		        } //rowIdx
 		        for (int rowIdx=1; rowIdx<maxRow; rowIdx++) {
-		        	code = list.get(rowIdx).get(8);
+		        	code = list.get(rowIdx).get(colIdex);
 		        	for (ClassMstInfo cm : classMstList) {
 		        		if (cm.code.equals(code) == true) {
 		        			cm.cnt++;
@@ -202,7 +196,7 @@ public class ApiApplication extends SpringBootServletInitializer {
 		        } //rowIdx
 				mailBody = "件数: " + (maxRow-1);
 	        	for (ClassMstInfo cm : classMstList) {
-	        		mailBody = mailBody + "\n" + cm.name + ": " + cm.cnt;
+	        		mailBody = mailBody + "\n" + cm.name + "("+ cm.code + "): " + cm.cnt;
 	        	}
 	        } else {
 	        	mailBody = "件数: 0";
@@ -212,8 +206,7 @@ public class ApiApplication extends SpringBootServletInitializer {
 		//---------------------------------------
 		//2. メール添付送信        
 		//---------------------------------------
-		String sysName = "kkk";
-		String subject = "[" + sysName + "]" + MyUtils.getDate();
+		String subject = "[" + sysName + "]" + objFile + "連絡(" + MyUtils.getDate() + ")";
 		if (saveXlsPath.equals("") == true) {
     		mailBody = mailBody + "\n添付ファイルなし";
 		}
@@ -258,6 +251,8 @@ public class ApiApplication extends SpringBootServletInitializer {
     
     @PostMapping("thspot")
     public String thspotPost(@RequestParam("obj") String obj) {
+		String sysName = "システム";
+		String objName = "";
 		String mailBody = "";
 		System.out.println("/thspot obj: " + obj);
         if (obj == null) {
@@ -265,12 +260,20 @@ public class ApiApplication extends SpringBootServletInitializer {
         	return msg;
         } else if (obj.equals("juchu") == true) {
 			//curl -X POST "http://localhost:8080/thspot?obj=juchu"
+			objName = "juchu集計";
         } else if (obj.equals("update") == true) {
  			//curl -X POST "http://localhost:8080/thspot?obj=update"
-        	ThSpotMikomiDAO.getInstance(config).mikomiUpdate();
-        	return null;
+        	try {
+				ThSpotMikomiDAO.getInstance(config).mikomiUpdate();
+			} catch (SQLException e) {
+				e.printStackTrace();
+				String msg = e.getMessage();
+				return msg;
+			}
+        	return "OK";
         } else if (obj.equals("uriage") == true) {
  			//curl -X POST "http://localhost:8080/thspot?obj=uriage"
+			objName = "uriage集計";
         } else {
 			String msg = "対象Object処理なし";
         	return msg;
@@ -294,7 +297,14 @@ public class ApiApplication extends SpringBootServletInitializer {
 		//データ取得
 		//---------------------------------------
 		ThSpotMikomiDAO dao = new ThSpotMikomiDAO(config);
-		ArrayList<String> list = dao.getDataTsv(sql);
+		ArrayList<String> list = null;
+		try {
+			list = dao.getDataTsv(sql);
+		} catch (SQLException e) {
+			e.printStackTrace();
+			String msg = e.getMessage();
+			return msg;
+		}
 		if (list != null) {
 			try {
 			    MyFiles.WriteList2File(list, savePath);
@@ -352,11 +362,10 @@ public class ApiApplication extends SpringBootServletInitializer {
 		//---------------------------------------
 		//2. メール添付送信        
 		//---------------------------------------
-		String sysName = "システム";
-		String subject = "[" + sysName + "]" + MyUtils.getDate();
+		String subject = "[" + sysName + "]" + objName + "連絡(" + MyUtils.getDate() + ")";
 		sendnMailProcess(subject, mailBody, "");
 		
-        return null;
+        return "OK";
     }
 }
 
