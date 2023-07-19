@@ -132,6 +132,6 @@ public class ThSpotMikomiDAO {
 			if (conn != null) {
 				conn.close();
 			}
-	   }
+	   	}
 	}
 }

@@ -50,7 +50,7 @@ public class ApiApplication extends SpringBootServletInitializer {
         	return msg;
         } else if (obj.equals("juchzn") == true) {
 			//curl -X POST "http://localhost:8080/kkk?obj=juchzn"
-			url = "http://localhost/api/jchzn";
+			url = "http://localhost/api/juchzn";
         } else if (obj.equals("seisan") == true) {
 			//curl -X POST "http://localhost:8080/kkk?obj=seisan"
 			url = "http://localhost/api/seisan";
@@ -165,42 +165,12 @@ public class ApiApplication extends SpringBootServletInitializer {
 		//---------------------------------------
 		if (obj.equals("seisan") == true) {
 	        if (maxRow > 1) {
-				int colIdex = 28;
-				String code;
-				String name;
-				ArrayList<ClassMstInfo> classMstList = new ArrayList<ClassMstInfo>();
-	        	boolean matching = false;
-		        for (int rowIdx=1; rowIdx<maxRow; rowIdx++) {
-		        	code = list.get(rowIdx).get(colIdex);
-		        	name = list.get(rowIdx).get(colIdex+1);
-        			matching  = false;
-		        	for (ClassMstInfo cm : classMstList) {
-		        		if (cm.code.equals(code) == true) {
-		        			matching  = true;
-		        			break;
-		        		}
-		        	}
-		        	if (matching == false) {
-			        	ClassMstInfo classMst = new ClassMstInfo(code, name);
-		        		classMstList.add(classMst);
-		        	}
-		        } //rowIdx
-		        for (int rowIdx=1; rowIdx<maxRow; rowIdx++) {
-		        	code = list.get(rowIdx).get(colIdex);
-		        	for (ClassMstInfo cm : classMstList) {
-		        		if (cm.code.equals(code) == true) {
-		        			cm.cnt++;
-		        			break;
-		        		}
-		        	}
-		        } //rowIdx
+				int colIdx = 28;
 				mailBody = "件数: " + (maxRow-1);
-	        	for (ClassMstInfo cm : classMstList) {
-	        		mailBody = mailBody + "\n" + cm.name + "("+ cm.code + "): " + cm.cnt;
-	        	}
-	        } else {
-	        	mailBody = "件数: 0";
-	        }
+		        mailBody = mailBody + getGroupShukei(list, colIdx);
+		    } else {
+		    	mailBody = "件数: 0";
+		    }
 		}
 
 		//---------------------------------------
@@ -212,7 +182,45 @@ public class ApiApplication extends SpringBootServletInitializer {
 		}
 		sendnMailProcess(subject, mailBody, saveXlsPath);
 		
-        return null;
+        return "OK";
+    }
+    
+    String getGroupShukei(ArrayList<ArrayList<String>> list, int colIdx) {
+    	String msg = "";
+        int maxRow = list.size();
+    	
+		String code;
+		String name;
+		ArrayList<ClassMstInfo> classMstList = new ArrayList<ClassMstInfo>();
+    	boolean matching = false;
+        for (int rowIdx=1; rowIdx<maxRow; rowIdx++) {
+        	code = list.get(rowIdx).get(colIdx);
+        	name = list.get(rowIdx).get(colIdx+1);
+			matching  = false;
+        	for (ClassMstInfo cm : classMstList) {
+        		if (cm.code.equals(code) == true) {
+        			matching  = true;
+        			break;
+        		}
+        	}
+        	if (matching == false) {
+	        	ClassMstInfo classMst = new ClassMstInfo(code, name);
+        		classMstList.add(classMst);
+        	}
+        } //rowIdx
+        for (int rowIdx=1; rowIdx<maxRow; rowIdx++) {
+        	code = list.get(rowIdx).get(colIdx);
+        	for (ClassMstInfo cm : classMstList) {
+        		if (cm.code.equals(code) == true) {
+        			cm.cnt++;
+        			break;
+        		}
+        	}
+        } //rowIdx
+    	for (ClassMstInfo cm : classMstList) {
+    		msg = "\n" + cm.name + "("+ cm.code + "): " + cm.cnt;
+    	}
+		return msg;
     }
 
 	//------------------------------------------------------
