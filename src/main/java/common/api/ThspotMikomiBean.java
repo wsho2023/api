@@ -1,4 +1,4 @@
-package common.thspot;
+package common.api;
 
 public class ThspotMikomiBean {
 

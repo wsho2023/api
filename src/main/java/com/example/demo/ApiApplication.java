@@ -13,7 +13,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import common.thspot.ThSpotMikomiDAO;
+import common.api.ApiObjInfo;
+import common.api.ThSpotMikomiDAO;
+import common.backup.ScanBackupFile;
 import common.utils.MyExcel;
 import common.utils.MyFiles;
 import common.utils.MyMail;
@@ -39,35 +41,25 @@ public class ApiApplication extends SpringBootServletInitializer {
     @PostMapping("kkk")
     public String kkkPost(@RequestParam("obj") String obj) {
 		String sysName = "kkk";
+		System.out.println(sysName + " obj: " + obj);
 		String objFile = "";
 		String mailBody = "";
-		System.out.println(sysName + " obj: " + obj);
 		String url = "";
-		String filters = "";
-		String sort = "";
         if (obj == null) {
 			String msg = "Object指定なし";
         	return msg;
-        } else if (obj.equals("juchzn") == true) {
-			//curl -X POST "http://localhost:8080/kkk?obj=juchzn"
-			url = "http://localhost/api/juchzn";
-        } else if (obj.equals("seisan") == true) {
-			//curl -X POST "http://localhost:8080/kkk?obj=seisan"
-			url = "http://localhost/api/seisan";
-        } else if (obj.equals("uriage") == true) {
-			//curl -X POST "http://localhost:8080/kkk?obj=uriage"
-			url = "http://localhost/api/uriage";
-        } else if (obj.equals("kaigai") == true) {
-			//curl -X POST "http://localhost:8080/kkk?obj=kaigai"
-			url = "http://localhost/api/kaigai";
-        } else {
+        }
+    	ApiObjInfo def = new ApiObjInfo(sysName, obj);
+		url = def.getUrl();
+		MyUtils.SystemLogPrint("url " + url);
+		objFile = def.getObjeFile();
+        if (url == null) {
 			String msg = "対象Object処理なし";
         	return msg;
         }
 
 		String outputPath = config.getPathOutputPath();
 		String saveTxtPath = outputPath + obj + ".tsv";
-
 		//---------------------------------------
 		//HTTP request process
 		//---------------------------------------
@@ -113,7 +105,7 @@ public class ApiApplication extends SpringBootServletInitializer {
 		if (MyFiles.exists(defXlsPath) != true) {
 			String msg = "  " + objFile + "テンプレートファイルが見つかりませんでした";
 			MyUtils.SystemErrPrint(msg);
-			return msg;
+			saveXlsPath = saveTxtPath;
 		} else {
 			//テンプレートから出力ファイル生成
 	        String tmpXlsPath = templePath + objFile + "_tmp.xlsx";
@@ -257,12 +249,149 @@ public class ApiApplication extends SpringBootServletInitializer {
 		return 0;
 	}
     
+    @PostMapping("hantei")
+    public String hanteiPost(@RequestParam("obj") String obj) {
+		String sysName = "hantei";
+		System.out.println(sysName + " obj: " + obj);
+		String objFile = "";
+		String mailBody = "";
+		String url = "";
+        if (obj == null) {
+			String msg = "Object指定なし";
+        	return msg;
+        }
+		//curl -X POST "http://localhost:8080/hantei?obj=**"
+    	ApiObjInfo def = new ApiObjInfo(sysName, obj);
+		url = def.getUrl();
+		MyUtils.SystemLogPrint("url " + url);
+		objFile = def.getObjeFile();
+        if (url == null) {
+			String msg = "対象Object処理なし";
+        	return msg;
+        }
+
+		String outputPath = config.getPathOutputPath();
+		String saveTxtPath = outputPath + obj + ".tsv";
+		//---------------------------------------
+		//HTTP request process
+		//---------------------------------------
+		WebApi api = new WebApi();
+		api.setUrl("GET", url);
+		int res = -1;
+		try {
+            //既存ファイルがあれば削除
+			MyFiles.existsDelete(saveTxtPath);
+			//データダウンロード
+			res = api.download(saveTxtPath);
+		} catch (IOException e) {
+			e.printStackTrace();
+			String msg = e.getMessage();
+        	return msg;
+		}
+        if (res != 200) {	//HttpURLConnection.HTTP_OK: 200
+			String msg = "HTTP Connection Failed: " + res;
+	        MyUtils.SystemErrPrint(msg);
+        	return msg;
+        } 
+
+		//---------------------------------------
+		//TSVファイル読み込み
+		//---------------------------------------
+        ArrayList<ArrayList<String>> list = null;
+		try {
+			list = MyFiles.parseTSV(saveTxtPath, "UTF-8");	//or "SJIS"
+		} catch (IOException e) {
+			e.printStackTrace();
+			String msg = e.getMessage();
+        	return msg;
+		}
+        int maxRow = list.size();
+		int maxCol = list.get(0).size();
+
+		//---------------------------------------
+		//1. Excelに書き出し
+		//---------------------------------------
+		String templePath = config.getPathTempletePath();
+        String defXlsPath = templePath + objFile + ".xlsx";
+        String saveXlsPath = "";
+		if (MyFiles.exists(defXlsPath) != true) {
+			String msg = "  " + objFile + "テンプレートファイルが見つかりませんでした";
+			MyUtils.SystemErrPrint(msg);
+			saveXlsPath = saveTxtPath;
+		} else {
+			//テンプレートから出力ファイル生成
+	        String tmpXlsPath = templePath + objFile + "_tmp.xlsx";
+			try {
+				MyFiles.copyOW(defXlsPath, tmpXlsPath);	//上書き
+			} catch (IOException e) {
+				e.printStackTrace();
+				String msg = e.getMessage();
+				return msg;
+			}
+			//---------------------------------------
+			//Excelオープン(XLSXのファイル読込)
+			//---------------------------------------
+			MyUtils.SystemLogPrint("  Excelオープン...: " + tmpXlsPath + " 種別: " + objFile);
+			MyExcel xlsx = new MyExcel();
+			try {
+				xlsx.open(tmpXlsPath, null, false);
+				String strValue;
+				for (int rowIdx=0; rowIdx<maxRow; rowIdx++) {
+					xlsx.createRow(rowIdx);					//行の生成
+					for (int colIdx=0; colIdx<maxCol; colIdx++) {
+						strValue = list.get(rowIdx).get(colIdx);
+						xlsx.setCellValue(colIdx, strValue);//セルの生成
+					} //colIdx
+				} //rowIdx
+
+				//1行目ヘッダをセンタリング
+				xlsx.getRow(0);
+				for (int colIdx=0; colIdx<maxCol; colIdx++) {
+					xlsx.setCellAlignCenter(colIdx);
+				} //colIdx
+				
+				//---------------------------------------
+				//XLSXのファイル保存
+				//---------------------------------------
+				saveXlsPath = outputPath + objFile + "_" + MyUtils.getDateStr() +".xlsx";
+				MyUtils.SystemLogPrint("  XLSXファイル保存: " + saveXlsPath);
+				xlsx.save(saveXlsPath);
+				xlsx.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+				String msg = e.getMessage();
+				return msg;
+			}
+		}
+		
+		//---------------------------------------
+		//メール本文作成
+		//---------------------------------------
+        if (maxRow > 1) {
+			//int colIdx = 28;
+			mailBody = "件数: " + (maxRow-1);
+	    } else {
+	    	mailBody = "件数: 0";
+	    }
+
+		//---------------------------------------
+		//2. メール添付送信        
+		//---------------------------------------
+		String subject = "[" + sysName + "]" + objFile + "連絡(" + MyUtils.getDate() + ")";
+		if (saveXlsPath.equals("") == true) {
+    		mailBody = mailBody + "\n添付ファイルなし";
+		}
+		sendnMailProcess(subject, mailBody, saveXlsPath);
+		
+        return "OK";
+    }
+    
     @PostMapping("thspot")
     public String thspotPost(@RequestParam("obj") String obj) {
-		String sysName = "システム";
+		String sysName = "thspot";
+		System.out.println("/thspot obj: " + obj);
 		String objName = "";
 		String mailBody = "";
-		System.out.println("/thspot obj: " + obj);
         if (obj == null) {
 			String msg = "Object指定なし";
         	return msg;
@@ -288,7 +417,6 @@ public class ApiApplication extends SpringBootServletInitializer {
         }
 	    String sqlPath =  config.getPathTempletePath() + obj + ".sql";
 		String savePath = config.getPathOutputPath() + obj + ".tsv";
-		
 		//---------------------------------------
 		//SQL取得
 		//---------------------------------------
@@ -374,6 +502,39 @@ public class ApiApplication extends SpringBootServletInitializer {
 		sendnMailProcess(subject, mailBody, "");
 		
         return "OK";
+    }
+    
+    @PostMapping("/backup")
+    public String backupPost(@RequestParam("obj") String obj) {
+    	String targetPath;
+    	String backupPath;
+    	int days;
+        if (obj == null) {
+			String msg = "Object指定なし";
+        	return msg;
+        } else if (obj.equals("bk1") == true) {
+        	//curl -X POST http://localhost:8080/backup?obj=bk1
+        	targetPath = "D:\\\\pleiades\\upload\\done\\";
+        	backupPath = "D:\\\\pleiades\\upload\\done\\backup\\";
+        	days = 7;	//日
+        } else {
+			String msg = "対象Object処理なし";
+        	return msg;
+        }
+        
+    	ScanBackupFile backup = new ScanBackupFile(targetPath, backupPath, days);
+    	backup.run();
+    	
+		//メール本文
+		String mailBody = "";
+		mailBody = mailBody + "スキャンパス: " + targetPath;
+		mailBody = mailBody + "\n削除対象: " + days + "日以上";
+		mailBody = mailBody + "\nトータルファイル数: " + backup.totalCount + "、削除数: " + backup.deleteCount;
+		mailBody = mailBody + "\nトータルファイルサイズ: " + backup.totalMbSize + "MB、削除サイズ: " + backup.deleteMbSize + "MB";
+		mailBody = mailBody + "\nバックアップ: " + backup.zipFilePath;
+		System.out.println(mailBody);
+		
+    	return "OK";
     }
 }
 

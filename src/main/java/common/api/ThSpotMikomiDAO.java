@@ -1,4 +1,4 @@
-package common.thspot;
+package common.api;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
