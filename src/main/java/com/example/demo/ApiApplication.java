@@ -506,8 +506,10 @@ public class ApiApplication extends SpringBootServletInitializer {
     
     @PostMapping("/backup")
     public String backupPost(@RequestParam("obj") String obj) {
+    	String sysName = "backup";
     	String targetPath;
     	String backupPath;
+    	String objName;
     	int days;
         if (obj == null) {
 			String msg = "Object指定なし";
@@ -516,7 +518,8 @@ public class ApiApplication extends SpringBootServletInitializer {
         	//curl -X POST http://localhost:8080/backup?obj=bk1
         	targetPath = "D:\\\\pleiades\\upload\\done\\";
         	backupPath = "D:\\\\pleiades\\upload\\done\\backup\\";
-        	days = 7;	//日
+        	days = 30;	//日
+        	objName = "bk1";
         } else {
 			String msg = "対象Object処理なし";
         	return msg;
@@ -533,6 +536,12 @@ public class ApiApplication extends SpringBootServletInitializer {
 		mailBody = mailBody + "\nトータルファイルサイズ: " + backup.totalMbSize + "MB、削除サイズ: " + backup.deleteMbSize + "MB";
 		mailBody = mailBody + "\nバックアップ: " + backup.zipFilePath;
 		System.out.println(mailBody);
+		
+		//---------------------------------------
+		//2. メール添付送信        
+		//---------------------------------------
+		String subject = "[" + sysName + "]" + objName + "連絡(" + MyUtils.getDate() + ")";
+		sendnMailProcess(subject, mailBody, "");
 		
     	return "OK";
     }
