@@ -21,36 +21,37 @@ public class ApiObjInfo {
 				//curl -X POST "http://localhost:8080/kkk?obj=juchzn"
 				String today = MyUtils.getToday();
 				beseUrl = "http://localhost/api/juchzn?";
-				filters = "";
+				filters = "today='" + today + "'";
 				sort = "";
 				objFile = "juchzn";
 	        } else if (obj.equals("seisan") == true) {
 				//curl -X POST "http://localhost:8080/kkk?obj=seisan"
 				String today = MyUtils.getToday();
 				beseUrl = "http://localhost/api/seisan?";
-				filters = "";
+				filters = "today='" + today + "'";
 				sort = "";
 				objFile = "seisan";
 	        } else if (obj.equals("uriage") == true) {
 				//curl -X POST "http://localhost:8080/kkk?obj=uriage"
 				String today = MyUtils.getToday();
 				beseUrl = "http://localhost/api/uriage?";
-				filters = "";
+				filters = "today='" + today + "'";
 				sort = "";
 				objFile = "uriage";
 	        } else if (obj.equals("kaigai") == true) {
 				//curl -X POST "http://localhost:8080/kkk?obj=kaigai"
 				String today = MyUtils.getToday();
+				today = today.replace("/", "");	//YYYYMMDDへ変換
 				beseUrl = "http://localhost/api/kaigai?";
-				filters = "";
+				filters = "today='" + today + "'";
 				sort = "";
 				objFile = "kaigai";
 	        }
 		} else if (sys.equals("hantei") == true) {
 	    	if (obj.equals("2") == true) {
-				beseUrl = "http://localhost/api/2?";
 				String today = MyUtils.getToday();
-				filters = "";
+				beseUrl = "http://localhost/api/2?";
+				filters = "today='" + today + "'";
 				sort = "";
 				objFile = "hantei";
 			}

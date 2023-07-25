@@ -45,7 +45,7 @@ public class ScanBackupFile {
 	//public void main(String[] args) {
 	public void run() {
 		String zipFileName = MyFiles.getFileName(targetPath) + "_" + MyUtils.getDateStr() + ".zip";
-		zipFilePath = backupPath + zipFileName;	// 出力ファイル
+		zipFilePath = targetPath + zipFileName;	// 出力ファイル(いったん、targetPathに作成)
         Charset charset = Charset.forName("MS932");
         deleteList = new ArrayList<String>();
         try {
@@ -68,22 +68,23 @@ public class ScanBackupFile {
 			totalSize = totalSize - deleteSize;
 			totalMbSize = Math.round(totalSize/(1024*1024));
 			deleteMbSize = Math.round(deleteSize/(1024*1024));
+			
+			//backupPathへzipファイルを移動
+			String backFilePath = zipFilePath = backupPath + zipFileName;
+			MyFiles.moveOW(zipFilePath, backFilePath);
+			
+			//移動済みファイルをdelete
+			for (String f: deleteList) {
+				System.out.println("delete... " + f);
+				//MyFiles.delete(f);
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
-		
-		for (String f: deleteList) {
-			System.out.println("delete... " + f);
-			//try {
-			// 	MyFiles.delete(f);
-			//} catch (IOException e) {
-			//	e.printStackTrace();
-			//}
 		}
 	}
 	
 	private void scanDeleteFile(ZipOutputStream zos, String targetPath, String backupPath, boolean deleteFlag) {
-		//指定ディレクトリ肺のファイルのみ(またはディレクトリのみ)を取得
+		//指定ディレクトリ内のファイルのみ(またはディレクトリのみ)を取得
         File file = new File(targetPath);
         File fileArray[] = file.listFiles();
         
@@ -99,7 +100,7 @@ public class ScanBackupFile {
                 //MyUtils.SystemLogPrint(f.toString());//ファイルを表示
                 String filePath = f.toString();
                 String extension = filePath.substring(filePath.length()-3);	//拡張子：後ろから3文字
-                if (extension.equals("tsv") == true) {
+                //if (extension.equals("tsv") == true) {
                     totalSize = totalSize + f.length();
                     totalCount++;
 					//https://qiita.com/fumikomatsu/items/b98cc4d0dee782323096
@@ -139,7 +140,7 @@ public class ScanBackupFile {
 	                    }
                     }
                 }
-            }
+            //}
         }
 	}
 }

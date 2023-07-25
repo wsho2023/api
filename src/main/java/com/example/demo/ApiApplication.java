@@ -244,7 +244,7 @@ public class ApiApplication extends SpringBootServletInitializer {
 		MyUtils.SystemLogPrint("  MAIL Subject: " + mailConf.subject);
 		MyUtils.SystemLogPrint("  MAIL Body: \n" + mailConf.body);
 		MyUtils.SystemLogPrint("  MAIL Attach: " + mailConf.attach);
-		//mailConf.sendRawMail();            
+		mailConf.sendRawMail();            
 		
 		return 0;
 	}
@@ -317,7 +317,7 @@ public class ApiApplication extends SpringBootServletInitializer {
 		if (MyFiles.exists(defXlsPath) != true) {
 			String msg = "  " + objFile + "テンプレートファイルが見つかりませんでした";
 			MyUtils.SystemErrPrint(msg);
-			saveXlsPath = saveTxtPath;
+			saveXlsPath = saveTxtPath;	//代わりにtxtファイルを添付ファイルとする。
 		} else {
 			//テンプレートから出力ファイル生成
 	        String tmpXlsPath = templePath + objFile + "_tmp.xlsx";
@@ -498,7 +498,7 @@ public class ApiApplication extends SpringBootServletInitializer {
 		//---------------------------------------
 		//2. メール添付送信        
 		//---------------------------------------
-		String subject = "[" + sysName + "]" + objName + "連絡(" + MyUtils.getDate() + ")";
+		String subject = "[" + sysName + "]完了連絡(" + objName + " " + MyUtils.getDate() + ")";
 		sendnMailProcess(subject, mailBody, "");
 		
         return "OK";
@@ -514,12 +514,18 @@ public class ApiApplication extends SpringBootServletInitializer {
         if (obj == null) {
 			String msg = "Object指定なし";
         	return msg;
-        } else if (obj.equals("bk1") == true) {
-        	//curl -X POST http://localhost:8080/backup?obj=bk1
+        } else if (obj.equals("trace") == true) {
+        	//curl -X POST http://localhost:8080/backup?obj=trace
         	targetPath = "D:\\\\pleiades\\upload\\done\\";
         	backupPath = "D:\\\\pleiades\\upload\\done\\backup\\";
         	days = 30;	//日
-        	objName = "bk1";
+        	objName = "trace";
+        } else if (obj.equals("online") == true) {
+        	//curl -X POST http://localhost:8080/backup?obj=online
+        	targetPath = "D:\\\\pleiades\\upload\\done\\";
+        	backupPath = "D:\\\\pleiades\\upload\\done\\backup\\";
+        	days = 30;	//日
+        	objName = "online";
         } else {
 			String msg = "対象Object処理なし";
         	return msg;
@@ -535,12 +541,11 @@ public class ApiApplication extends SpringBootServletInitializer {
 		mailBody = mailBody + "\nトータルファイル数: " + backup.totalCount + "、削除数: " + backup.deleteCount;
 		mailBody = mailBody + "\nトータルファイルサイズ: " + backup.totalMbSize + "MB、削除サイズ: " + backup.deleteMbSize + "MB";
 		mailBody = mailBody + "\nバックアップ: " + backup.zipFilePath;
-		System.out.println(mailBody);
 		
 		//---------------------------------------
 		//2. メール添付送信        
 		//---------------------------------------
-		String subject = "[" + sysName + "]" + objName + "連絡(" + MyUtils.getDate() + ")";
+		String subject = "[" + sysName + "]完了連絡(" + objName + " " + MyUtils.getDate() + ")";
 		sendnMailProcess(subject, mailBody, "");
 		
     	return "OK";
