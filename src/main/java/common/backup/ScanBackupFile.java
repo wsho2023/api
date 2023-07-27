@@ -42,7 +42,6 @@ public class ScanBackupFile {
 		deleteMbSize = 0;
 	}
 	
-	//public void main(String[] args) {
 	public void run() {
 		String zipFileName = MyFiles.getFileName(targetPath) + "_" + MyUtils.getDateStr() + ".zip";
 		zipFilePath = targetPath + zipFileName;	// 出力ファイル(いったん、targetPathに作成)
@@ -91,7 +90,7 @@ public class ScanBackupFile {
         for (File f: fileArray) {
             // フォルダ
             if (f.isDirectory()) {
-                MyUtils.SystemLogPrint(f.toString());//フォルダを表示
+                System.out.println(f.toString());//フォルダを表示
                 scanDeleteFile(zos, f.toString(), backupPath, deleteFlag);
             }
             
@@ -114,10 +113,10 @@ public class ScanBackupFile {
                     
                     if (start.compareTo(koushin) > 0) {		//compareToで比較
                         String update_time = MyUtils.sdf.format(koushin);
-                        MyUtils.SystemLogPrint("delete... " + update_time+"： " + filePath);
 	                    deleteSize = deleteSize + f.length();
 	                    deleteCount++;
                         if (deleteFlag == true) {
+                        	System.out.println("delete... " + update_time+"： " + filePath);
 	                        try {
 	                        	MyFiles.delete(filePath);
 	                        } catch (IOException e) {
