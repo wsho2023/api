@@ -98,7 +98,7 @@ public class ScanBackupFile {
             if (f.isFile()) {
                 //MyUtils.SystemLogPrint(f.toString());//ファイルを表示
                 String filePath = f.toString();
-                String extension = filePath.substring(filePath.length()-3);	//拡張子：後ろから3文字
+                //String extension = filePath.substring(filePath.length()-3);	//拡張子：後ろから3文字
                 //if (extension.equals("tsv") == true) {
                     totalSize = totalSize + f.length();
                     totalCount++;

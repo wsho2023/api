@@ -155,14 +155,11 @@ public class ApiApplication extends SpringBootServletInitializer {
 		//---------------------------------------
 		//メール本文作成
 		//---------------------------------------
-		if (obj.equals("seisan") == true) {
-	        if (maxRow > 1) {
-				int colIdx = 28;
-				mailBody = "件数: " + (maxRow-1);
-		        mailBody = mailBody + getGroupShukei(list, colIdx);
-		    } else {
-		    	mailBody = "件数: 0";
-		    }
+		if (maxRow > 1) {
+			mailBody = "件数: " + (maxRow-1);
+			mailBody = mailBody + def.getGroupShukei(list);
+		} else {
+			mailBody = "件数: 0";
 		}
 
 		//---------------------------------------
@@ -177,44 +174,6 @@ public class ApiApplication extends SpringBootServletInitializer {
         return "OK";
     }
     
-    String getGroupShukei(ArrayList<ArrayList<String>> list, int colIdx) {
-    	String msg = "";
-        int maxRow = list.size();
-    	
-		String code;
-		String name;
-		ArrayList<ClassMstInfo> classMstList = new ArrayList<ClassMstInfo>();
-    	boolean matching = false;
-        for (int rowIdx=1; rowIdx<maxRow; rowIdx++) {
-        	code = list.get(rowIdx).get(colIdx);
-        	name = list.get(rowIdx).get(colIdx+1);
-			matching  = false;
-        	for (ClassMstInfo cm : classMstList) {
-        		if (cm.code.equals(code) == true) {
-        			matching  = true;
-        			break;
-        		}
-        	}
-        	if (matching == false) {
-	        	ClassMstInfo classMst = new ClassMstInfo(code, name);
-        		classMstList.add(classMst);
-        	}
-        } //rowIdx
-        for (int rowIdx=1; rowIdx<maxRow; rowIdx++) {
-        	code = list.get(rowIdx).get(colIdx);
-        	for (ClassMstInfo cm : classMstList) {
-        		if (cm.code.equals(code) == true) {
-        			cm.cnt++;
-        			break;
-        		}
-        	}
-        } //rowIdx
-    	for (ClassMstInfo cm : classMstList) {
-    		msg = "\n" + cm.name + "("+ cm.code + "): " + cm.cnt;
-    	}
-		return msg;
-    }
-
 	//------------------------------------------------------
 	//ファイル添付メール送信
 	//------------------------------------------------------
@@ -368,7 +327,6 @@ public class ApiApplication extends SpringBootServletInitializer {
 		//メール本文作成
 		//---------------------------------------
         if (maxRow > 1) {
-			//int colIdx = 28;
 			mailBody = "件数: " + (maxRow-1);
 	    } else {
 	    	mailBody = "件数: 0";
@@ -550,18 +508,4 @@ public class ApiApplication extends SpringBootServletInitializer {
 		
     	return "OK";
     }
-}
-
-class ClassMstInfo {
-	String code;
-	String name;
-	int cnt;
-	
-	ClassMstInfo() {cnt = 0;}
-	
-	ClassMstInfo(String cd, String nm) {
-		code = cd;
-		name = nm;
-		cnt = 0;
-	}
 }

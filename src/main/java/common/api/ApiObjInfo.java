@@ -2,10 +2,13 @@ package common.api;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 
 import common.utils.MyUtils;
 
 public class ApiObjInfo {
+	String sys;
+	String obj;
 	String beseUrl;
 	String fields;
 	String filters;
@@ -13,7 +16,12 @@ public class ApiObjInfo {
 	String url;
 	String objFile;
 	
-	public ApiObjInfo(String sys, String obj) {
+	public ApiObjInfo(String argSys, String argObj) {
+		sys = argSys;
+		obj = argObj;
+		fields = "";
+		filters = "";
+		sort = "";
 		url = null;
 		objFile = null;
 		if (sys.equals("kkk") == true) {
@@ -59,8 +67,21 @@ public class ApiObjInfo {
 	}
 	
 	public String getUrl() {
+		MyUtils.SystemLogPrint("fields " + fields);
 		MyUtils.SystemLogPrint("filters " + filters);
 		MyUtils.SystemLogPrint("sort " + sort);
+		if (fields.equals("") != true) {
+			String encoded;
+			try {
+				encoded = URLEncoder.encode(fields, "UTF-8");
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+				String msg = e.toString();
+				return msg;
+			}
+			System.out.println("エンコード結果: " + encoded);
+			url = url + "&fields=" + encoded;
+		}
 		if (filters.equals("") != true) {
 			String encoded;
 			try {
@@ -78,6 +99,67 @@ public class ApiObjInfo {
 		}
 		return this.url;
 	}
-	public String getObjeFile() {return this.objFile;}
 	
+	public String getObjeFile() {return this.objFile;}
+
+    public String getGroupShukei(ArrayList<ArrayList<String>> list) {
+		int colIdx = 0;
+    	String msg = "";
+		if (sys.equals("kkk") == true) {
+	        if (obj.equals("seisan") == true) {
+				colIdx = 28;
+			}
+		}
+		if (colIdx == 0) {
+			return msg;
+		}
+        int maxRow = list.size();
+		String code;
+		String name;
+		ArrayList<ClassMstInfo> classMstList = new ArrayList<ClassMstInfo>();
+    	boolean matching = false;
+        for (int rowIdx=1; rowIdx<maxRow; rowIdx++) {
+        	code = list.get(rowIdx).get(colIdx);
+        	name = list.get(rowIdx).get(colIdx+1);
+			matching  = false;
+        	for (ClassMstInfo cm : classMstList) {
+        		if (cm.code.equals(code) == true) {
+        			matching  = true;
+        			break;
+        		}
+        	}
+        	if (matching == false) {
+	        	ClassMstInfo classMst = new ClassMstInfo(code, name);
+        		classMstList.add(classMst);
+        	}
+        } //rowIdx
+        for (int rowIdx=1; rowIdx<maxRow; rowIdx++) {
+        	code = list.get(rowIdx).get(colIdx);
+        	for (ClassMstInfo cm : classMstList) {
+        		if (cm.code.equals(code) == true) {
+        			cm.cnt++;
+        			break;
+        		}
+        	}
+        } //rowIdx
+    	for (ClassMstInfo cm : classMstList) {
+    		msg = "\n" + cm.name + "("+ cm.code + "): " + cm.cnt;
+    	}
+		return msg;
+    }
 }
+
+class ClassMstInfo {
+	String code;
+	String name;
+	int cnt;
+	
+	ClassMstInfo() {cnt = 0;}
+	
+	ClassMstInfo(String cd, String nm) {
+		code = cd;
+		name = nm;
+		cnt = 0;
+	}
+}
+
