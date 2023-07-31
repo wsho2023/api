@@ -41,7 +41,6 @@ public class ThSpotMikomiDAO {
 		retStr = retStr + header[header.length-1] + "\r\n";
 
 		return retStr;
-		//return "行\tID\t品名\tコード3\t購入先\t分類\t予定月\t数量\t単価\t金額\r\n";
 	}
 
 	public ArrayList<String> getDataTsv(String sql) throws SQLException {

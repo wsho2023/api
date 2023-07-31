@@ -26,6 +26,10 @@ import common.utils.WebApi;
 @RestController	//★これが絶対必要！
 public class ApiApplication extends SpringBootServletInitializer {
 
+	final String serv1 = "kkk";
+	final String serv2 = "hantei";
+	final String serv3 = "kyaku";
+
     @Autowired
     private ApiConfig config;
 
@@ -38,9 +42,9 @@ public class ApiApplication extends SpringBootServletInitializer {
 		return application.sources(ApiApplication.class);
 	}
 
-    @PostMapping("kkk")
-    public String kkkPost(@RequestParam("obj") String obj) {
-		String sysName = "kkk";
+    @PostMapping(serv1)
+    public String serv1Post(@RequestParam("obj") String obj) {
+		String sysName = serv1;
 		System.out.println(sysName + " obj: " + obj);
 		String objFile = "";
 		String mailBody = "";
@@ -208,9 +212,9 @@ public class ApiApplication extends SpringBootServletInitializer {
 		return 0;
 	}
     
-    @PostMapping("hantei")
-    public String hanteiPost(@RequestParam("obj") String obj) {
-		String sysName = "hantei";
+    @PostMapping(serv2)
+    public String serv2Post(@RequestParam("obj") String obj) {
+		String sysName = serv2;
 		System.out.println(sysName + " obj: " + obj);
 		String objFile = "";
 		String mailBody = "";
@@ -267,6 +271,142 @@ public class ApiApplication extends SpringBootServletInitializer {
         int maxRow = list.size();
 		int maxCol = list.get(0).size();
 
+		//---------------------------------------
+		//1. Excelに書き出し
+		//---------------------------------------
+		String templePath = config.getPathTempletePath();
+        String defXlsPath = templePath + objFile + ".xlsx";
+        String saveXlsPath = "";
+		if (MyFiles.exists(defXlsPath) != true) {
+			String msg = "  " + objFile + "テンプレートファイルが見つかりませんでした";
+			MyUtils.SystemErrPrint(msg);
+			saveXlsPath = saveTxtPath;	//代わりにtxtファイルを添付ファイルとする。
+		} else {
+			//テンプレートから出力ファイル生成
+	        String tmpXlsPath = templePath + objFile + "_tmp.xlsx";
+			try {
+				MyFiles.copyOW(defXlsPath, tmpXlsPath);	//上書き
+			} catch (IOException e) {
+				e.printStackTrace();
+				String msg = e.getMessage();
+				return msg;
+			}
+			//---------------------------------------
+			//Excelオープン(XLSXのファイル読込)
+			//---------------------------------------
+			MyUtils.SystemLogPrint("  Excelオープン...: " + tmpXlsPath + " 種別: " + objFile);
+			MyExcel xlsx = new MyExcel();
+			try {
+				xlsx.open(tmpXlsPath, null, false);
+				String strValue;
+				for (int rowIdx=0; rowIdx<maxRow; rowIdx++) {
+					xlsx.createRow(rowIdx);					//行の生成
+					for (int colIdx=0; colIdx<maxCol; colIdx++) {
+						strValue = list.get(rowIdx).get(colIdx);
+						xlsx.setCellValue(colIdx, strValue);//セルの生成
+					} //colIdx
+				} //rowIdx
+
+				//1行目ヘッダをセンタリング
+				xlsx.getRow(0);
+				for (int colIdx=0; colIdx<maxCol; colIdx++) {
+					xlsx.setCellAlignCenter(colIdx);
+				} //colIdx
+				
+				//---------------------------------------
+				//XLSXのファイル保存
+				//---------------------------------------
+				saveXlsPath = outputPath + objFile + "_" + MyUtils.getDateStr() +".xlsx";
+				MyUtils.SystemLogPrint("  XLSXファイル保存: " + saveXlsPath);
+				xlsx.save(saveXlsPath);
+				xlsx.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+				String msg = e.getMessage();
+				return msg;
+			}
+		}
+		
+		//---------------------------------------
+		//メール本文作成
+		//---------------------------------------
+        if (maxRow > 1) {
+			mailBody = "件数: " + (maxRow-1);
+	    } else {
+	    	mailBody = "件数: 0";
+	    }
+
+		//---------------------------------------
+		//2. メール添付送信        
+		//---------------------------------------
+		String subject = "[" + sysName + "]" + objFile + "連絡(" + MyUtils.getDate() + ")";
+		if (saveXlsPath.equals("") == true) {
+    		mailBody = mailBody + "\n添付ファイルなし";
+		}
+		sendnMailProcess(subject, mailBody, saveXlsPath);
+		
+        return "OK";
+    }
+    
+    @PostMapping(serv3)
+    public String serv3Post(@RequestParam("obj") String obj) {
+		String sysName = serv3;
+		System.out.println(sysName + " obj: " + obj);
+		String objFile = "";
+		String mailBody = "";
+		String url = "";
+        if (obj == null) {
+			String msg = "Object指定なし";
+        	return msg;
+        }
+		//curl -X POST "http://localhost:8080/hantei?obj=**"
+    	ApiObjInfo def = new ApiObjInfo(sysName, obj);
+		url = def.getUrl();
+		MyUtils.SystemLogPrint("url " + url);
+		objFile = def.getObjeFile();
+        if (url == null) {
+			String msg = "対象Object処理なし";
+        	return msg;
+        }
+
+		String outputPath = config.getPathOutputPath();
+		String saveTxtPath = outputPath + obj + ".tsv";
+		//---------------------------------------
+		//HTTP request process
+		//---------------------------------------
+		WebApi api = new WebApi();
+		api.setUrl("GET", url);
+		int res = -1;
+		try {
+            //既存ファイルがあれば削除
+			MyFiles.existsDelete(saveTxtPath);
+			//データダウンロード
+			res = api.download(saveTxtPath);
+		} catch (IOException e) {
+			e.printStackTrace();
+			String msg = e.getMessage();
+        	return msg;
+		}
+        if (res != 200) {	//HttpURLConnection.HTTP_OK: 200
+			String msg = "HTTP Connection Failed: " + res;
+	        MyUtils.SystemErrPrint(msg);
+        	return msg;
+        } 
+
+		//---------------------------------------
+		//TSVファイル読み込み
+		//---------------------------------------
+        ArrayList<ArrayList<String>> list = null;
+		try {
+			list = MyFiles.parseTSV(saveTxtPath, "UTF-8");	//or "SJIS"
+		} catch (IOException e) {
+			e.printStackTrace();
+			String msg = e.getMessage();
+        	return msg;
+		}
+        int maxRow = list.size();
+		int maxCol = list.get(0).size();
+		
 		//---------------------------------------
 		//1. Excelに書き出し
 		//---------------------------------------

@@ -7,6 +7,10 @@ import java.util.ArrayList;
 import common.utils.MyUtils;
 
 public class ApiObjInfo {
+	final String serv1 = "kkk";
+	final String serv2 = "hantei";
+	final String serv3 = "kyaku";
+
 	String sys;
 	String obj;
 	String beseUrl;
@@ -24,7 +28,7 @@ public class ApiObjInfo {
 		sort = "";
 		url = null;
 		objFile = null;
-		if (sys.equals("kkk") == true) {
+		if (sys.equals(serv1) == true) {
 	        if (obj.equals("juchzn") == true) {
 				//curl -X POST "http://localhost:8080/kkk?obj=juchzn"
 				String today = MyUtils.getToday();
@@ -55,13 +59,27 @@ public class ApiObjInfo {
 				sort = "";
 				objFile = "kaigai";
 	        }
-		} else if (sys.equals("hantei") == true) {
+		} else if (sys.equals(serv2) == true) {
 	    	if (obj.equals("2") == true) {
 				String today = MyUtils.getToday();
 				beseUrl = "http://localhost/api/2?";
 				filters = "today='" + today + "'";
 				sort = "";
 				objFile = "hantei";
+			}
+		} else if (sys.equals(serv3) == true) {
+	    	if (obj.equals("1") == true) {
+				String today = MyUtils.getToday();
+				beseUrl = "http://localhost/api/1?";
+				filters = "today='" + today + "'";
+				sort = "";
+				objFile = "kokunai";
+			} else if (obj.equals("2") == true) {
+				String today = MyUtils.getToday();
+				beseUrl = "http://localhost/api/2?";
+				filters = "today='" + today + "'";
+				sort = "";
+				objFile = "kaigai";
 			}
 		}
 	}
@@ -70,6 +88,7 @@ public class ApiObjInfo {
 		MyUtils.SystemLogPrint("fields " + fields);
 		MyUtils.SystemLogPrint("filters " + filters);
 		MyUtils.SystemLogPrint("sort " + sort);
+		url = beseUrl;
 		if (fields.equals("") != true) {
 			String encoded;
 			try {
