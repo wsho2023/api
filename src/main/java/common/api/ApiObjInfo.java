@@ -124,7 +124,7 @@ public class ApiObjInfo {
     public String getGroupShukei(ArrayList<ArrayList<String>> list) {
 		int colIdx = 0;
     	String msg = "";
-		if (sys.equals("kkk") == true) {
+		if (sys.equals(serv1) == true) {
 	        if (obj.equals("seisan") == true) {
 				colIdx = 28;
 			}

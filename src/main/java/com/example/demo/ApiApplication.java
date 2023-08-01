@@ -26,10 +26,6 @@ import common.utils.WebApi;
 @RestController	//★これが絶対必要！
 public class ApiApplication extends SpringBootServletInitializer {
 
-	final String serv1 = "kkk";
-	final String serv2 = "hantei";
-	final String serv3 = "kyaku";
-
     @Autowired
     private ApiConfig config;
 
@@ -42,6 +38,7 @@ public class ApiApplication extends SpringBootServletInitializer {
 		return application.sources(ApiApplication.class);
 	}
 
+	final String serv1 = "kkk";
     @PostMapping(serv1)
     public String serv1Post(@RequestParam("obj") String obj) {
 		String sysName = serv1;
@@ -212,6 +209,7 @@ public class ApiApplication extends SpringBootServletInitializer {
 		return 0;
 	}
     
+	final String serv2 = "hantei";
     @PostMapping(serv2)
     public String serv2Post(@RequestParam("obj") String obj) {
 		String sysName = serv2;
@@ -348,6 +346,7 @@ public class ApiApplication extends SpringBootServletInitializer {
         return "OK";
     }
     
+	final String serv3 = "kyaku";
     @PostMapping(serv3)
     public String serv3Post(@RequestParam("obj") String obj) {
 		String sysName = serv3;
@@ -552,7 +551,7 @@ public class ApiApplication extends SpringBootServletInitializer {
 			MyUtils.SystemErrPrint(msg);
         	return msg;
 		}
-
+		
 		//---------------------------------------
 		//見込みデータBackUp
 		//---------------------------------------
