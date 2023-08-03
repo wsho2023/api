@@ -44,7 +44,7 @@ public class ScanBackupFile {
 	
 	public void run() {
 		String zipFileName = MyFiles.getFileName(targetPath) + "_" + MyUtils.getDateStr() + ".zip";
-		zipFilePath = targetPath + zipFileName;	// 出力ファイル(いったん、targetPathに作成)
+		zipFilePath = backupPath + zipFileName;
         Charset charset = Charset.forName("MS932");
         deleteList = new ArrayList<String>();
         try {
@@ -68,17 +68,22 @@ public class ScanBackupFile {
 			totalMbSize = Math.round(totalSize/(1024*1024));
 			deleteMbSize = Math.round(deleteSize/(1024*1024));
 			
-			//backupPathへzipファイルを移動
-			String backFilePath = zipFilePath = backupPath + zipFileName;
-			MyFiles.moveOW(zipFilePath, backFilePath);
+			////backupPathへzipファイルを移動(targetPathへ作っていた場合移動)
+			//String backFilePath = zipFilePath = backupPath + zipFileName;
+			//MyFiles.moveOW(zipFilePath, backFilePath);
 			
-			//移動済みファイルをdelete
-			for (String f: deleteList) {
-				System.out.println("delete... " + f);
-				//MyFiles.delete(f);
-			}
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+
+		//移動済みファイルをdelete
+		for (String f: deleteList) {
+			System.out.println("delete... " + f);
+			try {
+				MyFiles.delete(f);
+			} catch (IOException e) {
+				e.printStackTrace();	//アクセス不可ファイルは、失敗するけど、catchして無視
+			}
 		}
 	}
 	
