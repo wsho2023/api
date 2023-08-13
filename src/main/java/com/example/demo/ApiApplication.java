@@ -38,9 +38,11 @@ public class ApiApplication extends SpringBootServletInitializer {
 		return application.sources(ApiApplication.class);
 	}
 
+    //----------------------------------------------------------------------
 	final String serv1 = "kkk";
     @PostMapping(serv1)
     public String serv1Post(@RequestParam("obj") String obj) {
+    //----------------------------------------------------------------------
 		String sysName = serv1;
 		System.out.println(sysName + " obj: " + obj);
 		String objFile = "";
@@ -59,12 +61,13 @@ public class ApiApplication extends SpringBootServletInitializer {
         	return msg;
         }
 
-		String outputPath = config.getPathOutputPath();
+		//String outputPath = config.getPathOutputPath();
+		String outputPath = ".\\output\\";
 		String saveTxtPath = outputPath + obj + ".tsv";
 		//---------------------------------------
 		//HTTP request process
 		//---------------------------------------
-		WebApi api = new WebApi();
+/*		WebApi api = new WebApi();
 		api.setUrl("GET", url);
 		int res = -1;
 		try {
@@ -81,7 +84,7 @@ public class ApiApplication extends SpringBootServletInitializer {
 			String msg = "HTTP Connection Failed: " + res;
 	        MyUtils.SystemErrPrint(msg);
         	return msg;
-        } 
+		}*/ 
 
 		//---------------------------------------
 		//TSVファイル読み込み
@@ -91,22 +94,40 @@ public class ApiApplication extends SpringBootServletInitializer {
 			list = MyFiles.parseTSV(saveTxtPath, "UTF-8");	//or "SJIS"
 		} catch (IOException e) {
 			e.printStackTrace();
-			String msg = e.getMessage();
+			//String msg = e.getMessage();
+			String msg = e.toString();
         	return msg;
 		}
-        int maxRow = list.size();
-		int maxCol = list.get(0).size();
 
 		//---------------------------------------
 		//1. Excelに書き出し
 		//---------------------------------------
-		String templePath = config.getPathTempletePath();
+		//String templePath = config.getPathTempletePath();
+		String templePath = ".\\output\\";
         String defXlsPath = templePath + objFile + ".xlsx";
         String saveXlsPath = "";
 		if (MyFiles.exists(defXlsPath) != true) {
-			String msg = "  " + objFile + "テンプレートファイルが見つかりませんでした";
-			MyUtils.SystemErrPrint(msg);
-			saveXlsPath = saveTxtPath;
+			MyUtils.SystemErrPrint("  " + objFile + "テンプレートファイルが見つかりませんでした");
+			MyUtils.SystemLogPrint("  Excel新規オープン... シート名: " + objFile);
+			MyExcel xlsx = new MyExcel();
+			try {
+				//Excelファイル新規オープン
+				xlsx.newOpen(objFile);
+				//データ転記、データ転記した範囲をテーブル化
+				xlsx.setColFormat(def.getColFormat());
+				xlsx.writeData(objFile, list, true);
+				//Excelファイル保存
+				//saveXlsPath = outputPath + objFile + "_" + MyUtils.getDateStr() +".xlsx";
+				saveXlsPath = outputPath + objFile + "_test.xlsx";
+				MyUtils.SystemLogPrint("  XLSXファイル保存: " + saveXlsPath);
+				xlsx.save(saveXlsPath);
+				xlsx.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+				String msg = e.getMessage();
+				return msg;
+			}
+			
 		} else {
 			//テンプレートから出力ファイル生成
 	        String tmpXlsPath = templePath + objFile + "_tmp.xlsx";
@@ -123,26 +144,15 @@ public class ApiApplication extends SpringBootServletInitializer {
 			MyUtils.SystemLogPrint("  Excelオープン...: " + tmpXlsPath + " 種別: " + objFile);
 			MyExcel xlsx = new MyExcel();
 			try {
-				xlsx.open(tmpXlsPath, null, false);
-				String strValue;
-				for (int rowIdx=0; rowIdx<maxRow; rowIdx++) {
-					xlsx.createRow(rowIdx);					//行の生成
-					for (int colIdx=0; colIdx<maxCol; colIdx++) {
-						strValue = list.get(rowIdx).get(colIdx);
-						xlsx.setCellValue(colIdx, strValue);//セルの生成
-					} //colIdx
-				} //rowIdx
-
-				//1行目ヘッダをセンタリング
-				xlsx.getRow(0);
-				for (int colIdx=0; colIdx<maxCol; colIdx++) {
-					xlsx.setCellAlignCenter(colIdx);
-				} //colIdx
+				//Excelファイルオープン
+				xlsx.open(tmpXlsPath, objFile, false);
+				//データ転記、データ転記した範囲をテーブル化
+				xlsx.setColFormat(def.getColFormat());
+				xlsx.writeData(objFile, list, true);
 				
-				//---------------------------------------
-				//XLSXのファイル保存
-				//---------------------------------------
-				saveXlsPath = outputPath + objFile + "_" + MyUtils.getDateStr() +".xlsx";
+				//Excelファイル保存
+				//saveXlsPath = outputPath + objFile + "_" + MyUtils.getDateStr() +".xlsx";
+				saveXlsPath = outputPath + objFile + "_test.xlsx";
 				MyUtils.SystemLogPrint("  XLSXファイル保存: " + saveXlsPath);
 				xlsx.save(saveXlsPath);
 				xlsx.close();
@@ -156,6 +166,7 @@ public class ApiApplication extends SpringBootServletInitializer {
 		//---------------------------------------
 		//メール本文作成
 		//---------------------------------------
+        int maxRow = list.size();
 		if (maxRow > 1) {
 			mailBody = "件数: " + (maxRow-1);
 			mailBody = mailBody + def.getGroupShukei(list);
@@ -204,14 +215,16 @@ public class ApiApplication extends SpringBootServletInitializer {
 		MyUtils.SystemLogPrint("  MAIL Subject: " + mailConf.subject);
 		MyUtils.SystemLogPrint("  MAIL Body: \n" + mailConf.body);
 		MyUtils.SystemLogPrint("  MAIL Attach: " + mailConf.attach);
-		mailConf.sendRawMail();            
+		//mailConf.sendRawMail();            
 		
 		return 0;
 	}
     
+    //----------------------------------------------------------------------
 	final String serv2 = "hantei";
     @PostMapping(serv2)
     public String serv2Post(@RequestParam("obj") String obj) {
+    //----------------------------------------------------------------------
 		String sysName = serv2;
 		System.out.println(sysName + " obj: " + obj);
 		String objFile = "";
@@ -266,68 +279,33 @@ public class ApiApplication extends SpringBootServletInitializer {
 			String msg = e.getMessage();
         	return msg;
 		}
-        int maxRow = list.size();
-		int maxCol = list.get(0).size();
 
 		//---------------------------------------
 		//1. Excelに書き出し
 		//---------------------------------------
-		String templePath = config.getPathTempletePath();
-        String defXlsPath = templePath + objFile + ".xlsx";
         String saveXlsPath = "";
-		if (MyFiles.exists(defXlsPath) != true) {
-			String msg = "  " + objFile + "テンプレートファイルが見つかりませんでした";
-			MyUtils.SystemErrPrint(msg);
-			saveXlsPath = saveTxtPath;	//代わりにtxtファイルを添付ファイルとする。
-		} else {
-			//テンプレートから出力ファイル生成
-	        String tmpXlsPath = templePath + objFile + "_tmp.xlsx";
-			try {
-				MyFiles.copyOW(defXlsPath, tmpXlsPath);	//上書き
-			} catch (IOException e) {
-				e.printStackTrace();
-				String msg = e.getMessage();
-				return msg;
-			}
-			//---------------------------------------
-			//Excelオープン(XLSXのファイル読込)
-			//---------------------------------------
-			MyUtils.SystemLogPrint("  Excelオープン...: " + tmpXlsPath + " 種別: " + objFile);
-			MyExcel xlsx = new MyExcel();
-			try {
-				xlsx.open(tmpXlsPath, null, false);
-				String strValue;
-				for (int rowIdx=0; rowIdx<maxRow; rowIdx++) {
-					xlsx.createRow(rowIdx);					//行の生成
-					for (int colIdx=0; colIdx<maxCol; colIdx++) {
-						strValue = list.get(rowIdx).get(colIdx);
-						xlsx.setCellValue(colIdx, strValue);//セルの生成
-					} //colIdx
-				} //rowIdx
-
-				//1行目ヘッダをセンタリング
-				xlsx.getRow(0);
-				for (int colIdx=0; colIdx<maxCol; colIdx++) {
-					xlsx.setCellAlignCenter(colIdx);
-				} //colIdx
-				
-				//---------------------------------------
-				//XLSXのファイル保存
-				//---------------------------------------
-				saveXlsPath = outputPath + objFile + "_" + MyUtils.getDateStr() +".xlsx";
-				MyUtils.SystemLogPrint("  XLSXファイル保存: " + saveXlsPath);
-				xlsx.save(saveXlsPath);
-				xlsx.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-				String msg = e.getMessage();
-				return msg;
-			}
+		MyUtils.SystemLogPrint("  Excelオープン... シート名: " + objFile);
+		MyExcel xlsx = new MyExcel();
+		try {
+			//Excelファイルオープン
+			xlsx.newOpen(objFile);
+			//データ転記、データ転記した範囲をテーブル化
+			xlsx.writeData(objFile, list, true);
+			//Excelファイル保存
+			//saveXlsPath = outputPath + objFile + "_" + MyUtils.getDateStr() +".xlsx";
+			saveXlsPath = outputPath + objFile + "_test.xlsx";
+			MyUtils.SystemLogPrint("  XLSXファイル保存: " + saveXlsPath);
+			xlsx.save(saveXlsPath);
+			xlsx.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+			String msg = e.getMessage();
+			return msg;
 		}
-		
 		//---------------------------------------
 		//メール本文作成
 		//---------------------------------------
+        int maxRow = list.size();
         if (maxRow > 1) {
 			mailBody = "件数: " + (maxRow-1);
 	    } else {
@@ -346,9 +324,11 @@ public class ApiApplication extends SpringBootServletInitializer {
         return "OK";
     }
     
+    //----------------------------------------------------------------------
 	final String serv3 = "kyaku";
     @PostMapping(serv3)
     public String serv3Post(@RequestParam("obj") String obj) {
+    //----------------------------------------------------------------------
 		String sysName = serv3;
 		System.out.println(sysName + " obj: " + obj);
 		String objFile = "";
@@ -403,68 +383,34 @@ public class ApiApplication extends SpringBootServletInitializer {
 			String msg = e.getMessage();
         	return msg;
 		}
-        int maxRow = list.size();
-		int maxCol = list.get(0).size();
 		
 		//---------------------------------------
 		//1. Excelに書き出し
 		//---------------------------------------
-		String templePath = config.getPathTempletePath();
-        String defXlsPath = templePath + objFile + ".xlsx";
         String saveXlsPath = "";
-		if (MyFiles.exists(defXlsPath) != true) {
-			String msg = "  " + objFile + "テンプレートファイルが見つかりませんでした";
-			MyUtils.SystemErrPrint(msg);
-			saveXlsPath = saveTxtPath;	//代わりにtxtファイルを添付ファイルとする。
-		} else {
-			//テンプレートから出力ファイル生成
-	        String tmpXlsPath = templePath + objFile + "_tmp.xlsx";
-			try {
-				MyFiles.copyOW(defXlsPath, tmpXlsPath);	//上書き
-			} catch (IOException e) {
-				e.printStackTrace();
-				String msg = e.getMessage();
-				return msg;
-			}
-			//---------------------------------------
-			//Excelオープン(XLSXのファイル読込)
-			//---------------------------------------
-			MyUtils.SystemLogPrint("  Excelオープン...: " + tmpXlsPath + " 種別: " + objFile);
-			MyExcel xlsx = new MyExcel();
-			try {
-				xlsx.open(tmpXlsPath, null, false);
-				String strValue;
-				for (int rowIdx=0; rowIdx<maxRow; rowIdx++) {
-					xlsx.createRow(rowIdx);					//行の生成
-					for (int colIdx=0; colIdx<maxCol; colIdx++) {
-						strValue = list.get(rowIdx).get(colIdx);
-						xlsx.setCellValue(colIdx, strValue);//セルの生成
-					} //colIdx
-				} //rowIdx
-
-				//1行目ヘッダをセンタリング
-				xlsx.getRow(0);
-				for (int colIdx=0; colIdx<maxCol; colIdx++) {
-					xlsx.setCellAlignCenter(colIdx);
-				} //colIdx
-				
-				//---------------------------------------
-				//XLSXのファイル保存
-				//---------------------------------------
-				saveXlsPath = outputPath + objFile + "_" + MyUtils.getDateStr() +".xlsx";
-				MyUtils.SystemLogPrint("  XLSXファイル保存: " + saveXlsPath);
-				xlsx.save(saveXlsPath);
-				xlsx.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-				String msg = e.getMessage();
-				return msg;
-			}
+		MyUtils.SystemLogPrint("  Excelオープン... シート名: " + objFile);
+		MyExcel xlsx = new MyExcel();
+		try {
+			//Excelファイルオープン
+			xlsx.newOpen(objFile);
+			//データ転記、データ転記した範囲をテーブル化
+			xlsx.writeData(objFile, list, true);
+			//Excelファイル保存
+			//saveXlsPath = outputPath + objFile + "_" + MyUtils.getDateStr() +".xlsx";
+			saveXlsPath = outputPath + objFile + "_test.xlsx";
+			MyUtils.SystemLogPrint("  XLSXファイル保存: " + saveXlsPath);
+			xlsx.save(saveXlsPath);
+			xlsx.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+			String msg = e.getMessage();
+			return msg;
 		}
 		
 		//---------------------------------------
 		//メール本文作成
 		//---------------------------------------
+        int maxRow = list.size();
         if (maxRow > 1) {
 			mailBody = "件数: " + (maxRow-1);
 	    } else {
@@ -483,8 +429,10 @@ public class ApiApplication extends SpringBootServletInitializer {
         return "OK";
     }
     
+    //----------------------------------------------------------------------
     @PostMapping("thspot")
     public String thspotPost(@RequestParam("obj") String obj) {
+    //----------------------------------------------------------------------
 		String sysName = "thspot";
 		System.out.println("/thspot obj: " + obj);
 		String objName = "";
@@ -555,7 +503,7 @@ public class ApiApplication extends SpringBootServletInitializer {
 		//---------------------------------------
 		//見込みデータBackUp
 		//---------------------------------------
-		ArrayList<String> list2 = null;
+		/*ArrayList<String> list2 = null;
 		if (obj.equals("juchu") == true) {
 			list2 = new ArrayList<String>();
 			list2.add(list.get(0));		//ヘッダ
@@ -590,7 +538,7 @@ public class ApiApplication extends SpringBootServletInitializer {
 					return msg;
 				}
 			}
-		}
+		}*/
 		
 		//---------------------------------------
 		//2. メール添付送信        
@@ -601,8 +549,10 @@ public class ApiApplication extends SpringBootServletInitializer {
         return "OK";
     }
     
+    //----------------------------------------------------------------------
     @PostMapping("/backup")
     public String backupPost(@RequestParam("obj") String obj) {
+    //----------------------------------------------------------------------
     	String sysName = "backup";
     	String targetPath;
     	String backupPath;

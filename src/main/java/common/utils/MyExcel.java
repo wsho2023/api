@@ -4,26 +4,42 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.DataFormat;
 import org.apache.poi.ss.usermodel.DateUtil;
+import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.ss.util.CellReference;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFTable;
+import org.apache.poi.xssf.usermodel.XSSFTableStyleInfo;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class MyExcel {
 	
-	Workbook book;
-	Sheet sheet;
+	public Workbook book;
+	//public Sheet sheet;
+	public XSSFSheet sheet;
 	Row row;
 	Cell cell;
-	CellStyle styleAlignCenter;
+	XSSFCellStyle headerStyle;
+	XSSFCellStyle textStyle;
+	XSSFCellStyle suryoStyle;
+	XSSFCellStyle tankaStyle;
+	XSSFCellStyle kingakuStyle;
+	String[][] colFormat;
+	private static final short FONT_SIZE = 11;
 	
 	//public MyExcel() {
 	//}
@@ -41,6 +57,18 @@ public class MyExcel {
 		else
 			book = WorkbookFactory.create(new File(xlsPath));
 	}
+	
+	public void newOpen(String sheetName) {
+		book = new XSSFWorkbook();	//OOXML(Office Open XML)形式のファイルフォーマット
+		if (sheetName == null)
+			sheet = (XSSFSheet) book.createSheet("sheet0");
+		else if (sheetName.equals("") == true)
+			sheet = (XSSFSheet) book.createSheet("sheet0");
+		else
+			sheet = (XSSFSheet) book.createSheet(sheetName);
+		
+		setCellStyle();
+	}
 
 	public void open(String xlsPath, String sheetName, boolean readOnly) throws IOException {
 		//拡張子は、xlsxのみ
@@ -55,22 +83,49 @@ public class MyExcel {
 			e.printStackTrace();
 		}
 		if (sheetName == null)
-			sheet = book.getSheetAt(0);
+			sheet = (XSSFSheet)book.getSheetAt(0);
 		else
-			sheet = book.getSheet(sheetName);
+			sheet = (XSSFSheet)book.getSheet(sheetName);
 		
-		styleAlignCenter = book.createCellStyle();
-		styleAlignCenter.setAlignment(HorizontalAlignment.CENTER);
-		
-		//新規作成のケース
-		//Workbook book = new XSSFWorkbook();		//xlsx形式ブックの生成
-		//Sheet sheet = book.createSheet();			//シートの生成
-		//Row row;
-		//Cell cell;
+		setCellStyle();
+	}
+	
+	private void setCellStyle() {
+		//データ用Cell Styleの作成
+		Font font = book.createFont();
+        font.setFontHeightInPoints(FONT_SIZE);
+        font.setFontName("Meiryo UI");
+        //https://www.javadrive.jp/poi/style/index6.html
+        DataFormat format = book.createDataFormat();
+        textStyle = (XSSFCellStyle)book.createCellStyle();
+        textStyle.setDataFormat(format.getFormat("@"));
+        textStyle.setFont(font);
+
+        suryoStyle = (XSSFCellStyle)book.createCellStyle();
+        suryoStyle.setDataFormat(format.getFormat("#,##0_ "));
+        suryoStyle.setFont(font);
+        
+        tankaStyle = (XSSFCellStyle)book.createCellStyle();
+        tankaStyle.setDataFormat(format.getFormat("#,##0.00"));
+        tankaStyle.setFont(font);
+        
+        kingakuStyle = (XSSFCellStyle)book.createCellStyle();
+        kingakuStyle.setDataFormat(format.getFormat("#,##0"));
+        kingakuStyle.setFont(font);
+        
+        //ヘッダ用Cell Styleの作成（センタリング、文字色 白）
+		Font font2 = book.createFont();
+        font2.setFontHeightInPoints(FONT_SIZE);
+        font2.setFontName("Meiryo UI");
+		font2.setColor((short) 9);	//IndexedColors.WHITE(9)
+		headerStyle = (XSSFCellStyle)book.createCellStyle();
+		headerStyle.setAlignment(HorizontalAlignment.CENTER);		//水平
+		headerStyle.setVerticalAlignment(VerticalAlignment.CENTER);	//垂直
+		headerStyle.setFont(font2);
 	}
 
 	public void setSheet(String string) {
-		this.sheet = book.getSheet(string);
+		this.sheet = (XSSFSheet)book.getSheet(string);
 		if (this.sheet != null)
 			System.out.println("setSheet: " + this.sheet.getSheetName());
 		else
@@ -115,10 +170,22 @@ public class MyExcel {
 		cell.setCellStyle(style);
 	}
 
-    public void setCellAlignCenter(int colIdx) {
+    public void setCellHeaderStyle(int colIdx) {
+		cell = row.getCell(colIdx);
+		cell.setCellStyle(headerStyle);
     }
 
-	private Object getCellValue(Cell cell) {
+	public boolean checkCellTypeNumeric() {
+		CellType ctype = cell.getCellType();
+		if (ctype == CellType.NUMERIC) {
+			return true;
+		} else {
+			return false;
+		}
+
+	}
+
+	public Object getCellValue(Cell cell) {
 		CellType ctype;
 		ctype = cell.getCellType();
 		if (ctype == CellType.STRING) {
@@ -155,6 +222,7 @@ public class MyExcel {
 	public void setCellValue(int colIdx, String strValue) {
 		cell = row.createCell(colIdx);
 		cell.setCellValue(strValue);
+		cell.setCellStyle(textStyle);
 	}
 
 	public void setCellValue(int colIdx, double dblValue) {
@@ -219,5 +287,189 @@ public class MyExcel {
 		}
 		
 		return strValue;
+	}
+
+	//指定したシート名と指定範囲をテーブル化
+	public int createTable(String tableName, int r_s, int c_s, int r_e, int c_e) {
+        final var sheet = (XSSFSheet) book.getSheet(tableName);
+		if (sheet == null) {
+			System.err.println("sheetName: " + tableName + " error!");
+			return -1;
+		}
+
+        //1行目ヘッダをセンタリング
+		row = sheet.getRow(0);
+		for (int colIdx=c_s; colIdx<=c_e; colIdx++) {
+			setCellHeaderStyle(colIdx);
+		} //colIdx
+		//1行目ウィンドウ枠の固定
+		sheet.createFreezePane(0, 1);
+
+        final var creationHelper = book.getCreationHelper();
+        //テーブルとして書式設定
+        final var tableArea = creationHelper.createAreaReference(
+	        new CellReference(r_s, c_s),
+	        new CellReference(r_e, c_e)
+        );
+        final var table = sheet.createTable(tableArea);
+        table.setName(tableName);
+        table.setDisplayName(tableName); // テーブル名
+        table.setStyleName("TableStyleMedium2"); // スタイル: TableStyleLight## | TableStyleMedium## | TableStyleDark##
+        final var style = (XSSFTableStyleInfo) table.getStyle();
+        style.setShowRowStripes(true); // 縞模様 (行)
+        final var ctAutoFilter = table.getCTTable().addNewAutoFilter();
+        ctAutoFilter.setRef(tableArea.formatAsString()); // フィルター ボタン
+    
+        //https://dukelab.hatenablog.com/entry/2015/02/17/130731
+        // 列幅を自動調整(AutoFit + フィルタ分幅追加)する。
+		for (int colIdx=c_s; colIdx<=c_e; colIdx++) {
+            sheet.autoSizeColumn(colIdx, true);
+			//width = xlsx.sheet.getColumnWidth(colIdx);
+            //xlsx.sheet.setColumnWidth(colIdx, width+660);
+			//System.out.println(colIdx + ": " + (width+660));
+		} //colIdx
+		
+		return 0;
+	}
+	
+	public int refreshTable(String tableName, int r_s, int c_s, int r_e, int c_e) {
+        final var sheet = (XSSFSheet) book.getSheet(tableName);
+		if (sheet == null) {
+			System.err.println("sheetName: " + tableName + " error!");
+			return -1;
+		}
+
+		XSSFTable table = sheet.getTables().get(0);
+		System.out.println("テーブル名: " + table.getName());
+		
+		//1行目ヘッダをセンタリング(クリアされているので再度設定)
+		row = sheet.getRow(0);
+		for (int colIdx=c_s; colIdx<=c_e; colIdx++) {
+			setCellHeaderStyle(colIdx);
+		} //colIdx
+		//1行目ウィンドウ枠の固定
+		sheet.createFreezePane(0, 1);
+    
+        final var creationHelper = book.getCreationHelper();
+        //テーブルの範囲更新
+        final var tableArea = creationHelper.createAreaReference(
+	        new CellReference(r_s, r_s),
+	        new CellReference(r_e, c_e)
+        );
+		table.setArea(tableArea);
+        //final var ctAutoFilter = table.getCTTable().addNewAutoFilter();
+		//ctAutoFilter.setRef(tableArea.formatAsString()); // フィルター ボタン
+        
+        //https://dukelab.hatenablog.com/entry/2015/02/17/130731
+        // 列幅を自動調整(AutoFit + フィルタ分幅追加)する。
+		int width;
+		for (int colIdx=c_s; colIdx<=c_e; colIdx++) {
+            sheet.autoSizeColumn(colIdx, true);
+			width = sheet.getColumnWidth(colIdx);
+            sheet.setColumnWidth(colIdx, width+660);
+			//System.out.println(colIdx + ": " + (width+660));
+		} //colIdx
+		
+		return 0;
+	}
+	
+	public void setColFormat(String[][] argColFormat) {
+		colFormat = new String[argColFormat.length][];
+		colFormat = argColFormat;
+	}
+	
+	//listデータ（2次元）をExcelに書き出し
+	public int writeData(String sheetName, ArrayList<ArrayList<String>> list, boolean tableFlag) {
+        final var sheet = (XSSFSheet) book.getSheet(sheetName);
+		if (sheet == null) {
+			System.err.println("sheetName: " + sheetName + " error!");
+			return -1;
+		}
+ 
+        int maxRow = list.size();
+		int maxCol = list.get(0).size();
+		String strValue;
+		int rowIdx = 0;
+		//ヘッダ行
+		row = sheet.createRow(rowIdx);			//行の生成
+		for (int colIdx=0; colIdx<maxCol; colIdx++) {
+			strValue = list.get(rowIdx).get(colIdx);
+			cell = row.createCell(colIdx);
+			cell.setCellStyle(textStyle);
+			cell.setCellValue(strValue);
+		}
+		//データ行
+		boolean matchFlag = false;
+		for (rowIdx=1; rowIdx<maxRow; rowIdx++) {
+			row = sheet.createRow(rowIdx);		//行の生成
+			for (int colIdx=0; colIdx<maxCol; colIdx++) {
+				strValue = list.get(rowIdx).get(colIdx);
+				cell = row.createCell(colIdx);
+				matchFlag = false;
+				for (String[] calFmt: colFormat) {
+					if (Integer.parseInt(calFmt[0]) == colIdx) {
+						if (calFmt[1].equals("SURYO")) {
+							try {
+								int tmpVal = Integer.parseInt(strValue);
+								cell.setCellStyle(suryoStyle);
+								cell.setCellValue(tmpVal);
+							} catch(NumberFormatException e) {
+								System.err.println("変換NG: " + strValue);
+								cell.setCellValue(strValue);
+							}
+							//System.out.println(calFmt[1] + ":" + strValue);
+							matchFlag = true;
+							break;
+						} else if (calFmt[1].equals("TANKA")) {
+							try {
+								double tmpVal = Double.parseDouble(strValue);
+								cell.setCellStyle(tankaStyle);
+								cell.setCellValue(tmpVal);
+							} catch(NumberFormatException e) {
+								System.err.println("変換NG: " + strValue);
+								cell.setCellValue(strValue);
+							}
+							//System.out.println(calFmt[1] + ":" + strValue);
+							matchFlag = true;
+							break;
+						} else if (calFmt[1].equals("KINGAKU")) {
+							try {
+								int tmpVal = Integer.parseInt(strValue);
+								cell.setCellStyle(kingakuStyle);
+								cell.setCellValue(tmpVal);
+							} catch(NumberFormatException e) {
+								System.err.println("変換NG: " + strValue);
+								cell.setCellValue(strValue);
+							}
+							//System.out.println(calFmt[1] + ":" + strValue);
+							matchFlag = true;
+							break;
+						} else if (calFmt[1].equals("TEXT")) {
+							cell.setCellStyle(textStyle);
+							cell.setCellValue(strValue);
+							//System.out.println(calFmt[1] + ":" + strValue);
+							matchFlag = true;
+							break;
+						} 
+					}
+				}
+				if (matchFlag == false) {
+					cell.setCellStyle(textStyle);
+					cell.setCellValue(strValue);
+					//System.out.println("TEXT:" + strValue);
+				}
+			} //colIdx
+		} //rowIdx
+		
+		if (tableFlag == true) {
+			List<XSSFTable> tableList = sheet.getTables();
+			if (tableList.size() == 0) {
+				createTable(sheetName, 0, 0, (maxRow-1), (maxCol-1));	//テーブル新規作成
+			} else {
+				refreshTable(sheetName, 0, 0, (maxRow-1), (maxCol-1));	//同名で作成しなおし
+			}
+			//sheet.removeTable(table);	//既存テーブル削除
+		}
+		return 0;
 	}
 }

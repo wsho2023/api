@@ -15,39 +15,41 @@ public class ApiObjInfo {
 	String obj;
 	String beseUrl;
 	String fields;
-	String filters;
+	String filter;
 	String sort;
 	String url;
 	String objFile;
+	String[][] colFormat;
 	
 	public ApiObjInfo(String argSys, String argObj) {
 		sys = argSys;
 		obj = argObj;
 		fields = "";
-		filters = "";
+		filter = "";
 		sort = "";
 		url = null;
 		objFile = null;
+		colFormat = null;
 		if (sys.equals(serv1) == true) {
 	        if (obj.equals("juchzn") == true) {
 				//curl -X POST "http://localhost:8080/kkk?obj=juchzn"
 				String today = MyUtils.getToday();
 				beseUrl = "http://localhost/api/juchzn?";
-				filters = "today='" + today + "'";
+				filter = "date='" + today + "'";
 				sort = "";
 				objFile = "juchzn";
 	        } else if (obj.equals("seisan") == true) {
 				//curl -X POST "http://localhost:8080/kkk?obj=seisan"
 				String today = MyUtils.getToday();
 				beseUrl = "http://localhost/api/seisan?";
-				filters = "today='" + today + "'";
+				filter = "date='" + today + "'";
 				sort = "";
 				objFile = "seisan";
 	        } else if (obj.equals("uriage") == true) {
 				//curl -X POST "http://localhost:8080/kkk?obj=uriage"
-				String today = MyUtils.getToday();
+				String kinou = MyUtils.getToday(-1);	//前日
 				beseUrl = "http://localhost/api/uriage?";
-				filters = "today='" + today + "'";
+				filter = "date='" + kinou + "'";
 				sort = "";
 				objFile = "uriage";
 	        } else if (obj.equals("kaigai") == true) {
@@ -55,15 +57,30 @@ public class ApiObjInfo {
 				String today = MyUtils.getToday();
 				today = today.replace("/", "");	//YYYYMMDDへ変換
 				beseUrl = "http://localhost/api/kaigai?";
-				filters = "today='" + today + "'";
+				filter = "date='" + today + "'";
 				sort = "";
 				objFile = "kaigai";
+	        } else if (obj.equals("daicho") == true) {
+	        	//curl -X POST "http://localhost:8080/kkk?obj=daicho"
+	        	beseUrl = "http://localhost/api/test?";
+				objFile = obj;
+		        String[][] format = {
+		        		{"9", "SURYO"},
+		        		{"10", "TANKA"},
+		        		{"11", "KINGAKU"},
+		        };
+				colFormat = new String[format.length][];
+				colFormat = format;
+	        } else if (obj.equals("new") == true) {
+	        	//curl -X POST "http://localhost:8080/kkk?obj=new"
+	        	beseUrl = "http://localhost/api/new?";
+				objFile = obj;
 	        }
 		} else if (sys.equals(serv2) == true) {
 	    	if (obj.equals("2") == true) {
 				String today = MyUtils.getToday();
 				beseUrl = "http://localhost/api/2?";
-				filters = "today='" + today + "'";
+				filter = "today='" + today + "'";
 				sort = "";
 				objFile = "hantei";
 			}
@@ -71,13 +88,13 @@ public class ApiObjInfo {
 	    	if (obj.equals("1") == true) {
 				String today = MyUtils.getToday();
 				beseUrl = "http://localhost/api/1?";
-				filters = "today='" + today + "'";
+				filter = "today='" + today + "'";
 				sort = "";
 				objFile = "kokunai";
 			} else if (obj.equals("2") == true) {
 				String today = MyUtils.getToday();
 				beseUrl = "http://localhost/api/2?";
-				filters = "today='" + today + "'";
+				filter = "today='" + today + "'";
 				sort = "";
 				objFile = "kaigai";
 			}
@@ -86,7 +103,7 @@ public class ApiObjInfo {
 	
 	public String getUrl() {
 		MyUtils.SystemLogPrint("fields " + fields);
-		MyUtils.SystemLogPrint("filters " + filters);
+		MyUtils.SystemLogPrint("filter " + filter);
 		MyUtils.SystemLogPrint("sort " + sort);
 		url = beseUrl;
 		if (fields.equals("") != true) {
@@ -98,28 +115,39 @@ public class ApiObjInfo {
 				String msg = e.toString();
 				return msg;
 			}
-			System.out.println("エンコード結果: " + encoded);
+			System.out.println("fieldsエンコード結果: " + encoded);
 			url = url + "&fields=" + encoded;
 		}
-		if (filters.equals("") != true) {
+		if (filter.equals("") != true) {
 			String encoded;
 			try {
-				encoded = URLEncoder.encode(filters, "UTF-8");
+				encoded = URLEncoder.encode(filter, "UTF-8");
 			} catch (UnsupportedEncodingException e) {
 				e.printStackTrace();
 				String msg = e.toString();
 				return msg;
 			}
-			System.out.println("エンコード結果: " + encoded);
+			System.out.println("filterエンコード結果: " + encoded);
 			url = url + "&filter=" + encoded;
 		}
 		if (sort.equals("") != true) {
+			String encoded;
+			try {
+				encoded = URLEncoder.encode(sort, "UTF-8");
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+				String msg = e.toString();
+				return msg;
+			}
+			System.out.println("filterエンコード結果: " + encoded);
 			url = url + "&sort=" + sort;	//ソート(空白を含まないこと)
 		}
 		return this.url;
 	}
 	
 	public String getObjeFile() {return this.objFile;}
+
+	public String[][] getColFormat() {return colFormat;	}
 
     public String getGroupShukei(ArrayList<ArrayList<String>> list) {
 		int colIdx = 0;
