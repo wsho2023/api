@@ -1,57 +1,72 @@
 package common.api;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 
+import com.example.demo.ApiConfig;
+
+import common.utils.MyExcel;
+import common.utils.MyFiles;
 import common.utils.MyUtils;
+import common.utils.WebApi;
 
 public class ApiObjInfo {
 	final String serv1 = "kkk";
 	final String serv2 = "hantei";
 	final String serv3 = "kyaku";
-
-	String sys;
-	String obj;
-	String beseUrl;
-	String fields;
-	String filter;
-	String sort;
-	String url;
-	String objFile;
-	String[][] colFormat;
 	
-	public ApiObjInfo(String argSys, String argObj) {
-		sys = argSys;
+	ApiConfig config;
+	String sysName;
+	String obj;
+	String objName;
+	String[][] colFormat;
+	ArrayList<ArrayList<String>> list = null;
+	String templePath;
+	String outputPath;
+    String saveXlsPath;
+	String url;
+	int dlFlag;
+	
+	public ApiObjInfo(ApiConfig argConfig, String argSys, String argObj) {
+		config = argConfig;
+        sysName = argSys;
 		obj = argObj;
-		fields = "";
-		filter = "";
-		sort = "";
-		url = null;
-		objFile = null;
+		objName = null;
 		colFormat = null;
-		if (sys.equals(serv1) == true) {
+		System.out.println("/" + sysName + " obj: " + obj);
+	}
+	
+	public String makeObject() {
+		String beseUrl = "";
+		String fields = "";
+		String filter = "";
+		String sort = "";
+		dlFlag = 0;	//ファイル出力
+		if (sysName.equals(serv1) == true) {
+			dlFlag = 0;	//ファイル出力
 	        if (obj.equals("juchzn") == true) {
 				//curl -X POST "http://localhost:8080/kkk?obj=juchzn"
 				String today = MyUtils.getToday();
 				beseUrl = "http://localhost/api/juchzn?";
 				filter = "date='" + today + "'";
 				sort = "";
-				objFile = "juchzn";
+				objName = "juchzn";
 	        } else if (obj.equals("seisan") == true) {
 				//curl -X POST "http://localhost:8080/kkk?obj=seisan"
 				String today = MyUtils.getToday();
 				beseUrl = "http://localhost/api/seisan?";
 				filter = "date='" + today + "'";
 				sort = "";
-				objFile = "seisan";
+				objName = "seisan";
 	        } else if (obj.equals("uriage") == true) {
 				//curl -X POST "http://localhost:8080/kkk?obj=uriage"
 				String kinou = MyUtils.getToday(-1);	//前日
 				beseUrl = "http://localhost/api/uriage?";
 				filter = "date='" + kinou + "'";
 				sort = "";
-				objFile = "uriage";
+				objName = "uriage";
 	        } else if (obj.equals("kaigai") == true) {
 				//curl -X POST "http://localhost:8080/kkk?obj=kaigai"
 				String today = MyUtils.getToday();
@@ -59,11 +74,11 @@ public class ApiObjInfo {
 				beseUrl = "http://localhost/api/kaigai?";
 				filter = "date='" + today + "'";
 				sort = "";
-				objFile = "kaigai";
+				objName = "kaigai";
 	        } else if (obj.equals("daicho") == true) {
 	        	//curl -X POST "http://localhost:8080/kkk?obj=daicho"
-	        	beseUrl = "http://localhost/api/test?";
-				objFile = obj;
+	        	beseUrl = "http://localhost:8090/daicho";
+				objName = obj;
 		        String[][] format = {
 		        		{"9", "SURYO"},
 		        		{"10", "TANKA"},
@@ -74,34 +89,36 @@ public class ApiObjInfo {
 	        } else if (obj.equals("new") == true) {
 	        	//curl -X POST "http://localhost:8080/kkk?obj=new"
 	        	beseUrl = "http://localhost/api/new?";
-				objFile = obj;
+				objName = obj;
 	        }
-		} else if (sys.equals(serv2) == true) {
+		} else if (sysName.equals(serv2) == true) {
+			dlFlag = 1;	//List読み込み
 	    	if (obj.equals("2") == true) {
 				String today = MyUtils.getToday();
 				beseUrl = "http://localhost/api/2?";
 				filter = "today='" + today + "'";
 				sort = "";
-				objFile = "hantei";
+				objName = "hantei";
 			}
-		} else if (sys.equals(serv3) == true) {
+		} else if (sysName.equals(serv3) == true) {
+			dlFlag = 1;	//List読み込み
 	    	if (obj.equals("1") == true) {
 				String today = MyUtils.getToday();
 				beseUrl = "http://localhost/api/1?";
 				filter = "today='" + today + "'";
 				sort = "";
-				objFile = "kokunai";
+				objName = "kokunai";
 			} else if (obj.equals("2") == true) {
 				String today = MyUtils.getToday();
 				beseUrl = "http://localhost/api/2?";
 				filter = "today='" + today + "'";
 				sort = "";
-				objFile = "kaigai";
+				objName = "kaigai";
 			}
 		}
-	}
-	
-	public String getUrl() {
+		if (objName == null)
+			return "対象Object処理なし";
+		
 		MyUtils.SystemLogPrint("fields " + fields);
 		MyUtils.SystemLogPrint("filter " + filter);
 		MyUtils.SystemLogPrint("sort " + sort);
@@ -142,23 +159,144 @@ public class ApiObjInfo {
 			System.out.println("filterエンコード結果: " + encoded);
 			url = url + "&sort=" + sort;	//ソート(空白を含まないこと)
 		}
-		return this.url;
+		return null;
 	}
 	
-	public String getObjeFile() {return this.objFile;}
+	public String execute() {
+		String msg = getDataApi();	//データ取得
+		if (msg != null) return msg;
+		
+		msg = makeExcel();			//Excelに書き出し
+		if (msg != null) return msg;
+		
+		msg = sendMail();			//メール添付送信
+		if (msg != null) return msg;
+		
+		return null;
+	}
+	
+	//---------------------------------------
+	//データ取得
+	//---------------------------------------
+	public String getDataApi() {
+		outputPath = config.getPathOutputPath();
+		String saveTxtPath = outputPath + obj + ".tsv";
+		//---------------------------------------
+		//HTTP request process
+		//---------------------------------------
+		WebApi api = new WebApi();
+		api.setUrl("GET", url);
+		int res = -1;
+		try {
+            //既存ファイルがあれば削除
+			MyFiles.existsDelete(saveTxtPath);
+			//データダウンロード
+			res = api.download(saveTxtPath, dlFlag);
+		} catch (IOException e) {
+			e.printStackTrace();
+        	return e.toString();
+		}
+        if (res != 200) {	//HttpURLConnection.HTTP_OK: 200
+			String msg = "HTTP Connection Failed: " + res;
+	        MyUtils.SystemErrPrint(msg);
+        	return msg;
+		}
+        if (dlFlag == 0) {
+    		//---------------------------------------
+    		//TSVファイル読み込み
+    		//---------------------------------------
+            list = null;
+    		try {
+    			list = MyFiles.parseTSV(saveTxtPath, "UTF-8");	//or "SJIS"
+    		} catch (IOException e) {
+    			e.printStackTrace();
+            	return e.toString();
+    		}
+        } else {
+			list = api.getListData();
+        }
+		if (list == null) {
+			String msg = "抽出データなし";
+			MyUtils.SystemErrPrint(msg);
+			return msg;
+		}
+		
+		return null;
+	}
 
-	public String[][] getColFormat() {return colFormat;	}
+	//---------------------------------------
+	//Excelに書き出し
+	//---------------------------------------
+	public String makeExcel() {
+		templePath = config.getPathTempletePath();
+		outputPath = config.getPathOutputPath();
+        String defXlsPath = templePath + objName + ".xlsx";
+        String tmpXlsPath = null;
+		if (MyFiles.exists(defXlsPath) != true) {
+			tmpXlsPath = null;	//新規作成
+			MyUtils.SystemLogPrint("  Excel新規オープン... 種別: " + objName);
+		} else {
+	        tmpXlsPath = templePath + objName + "_tmp.xlsx";
+			try {
+				MyFiles.copyOW(defXlsPath, tmpXlsPath);	//上書き
+			} catch (IOException e) {
+				e.printStackTrace();
+				return e.getMessage();
+			}
+			MyUtils.SystemLogPrint("  Excelオープン...: " + tmpXlsPath + " 種別: " + objName);
+		}
+		
+		MyExcel xlsx = new MyExcel();
+		try {
+			//Excelファイルオープン(tmpXlsPath=nullなら、新規作成)
+			xlsx.open(tmpXlsPath, objName);
+			//データ転記、データ転記した範囲をテーブル化
+			xlsx.setColFormat(colFormat);
+			xlsx.writeData(objName, list, true);
+			//xlsx.refreshPivot("pivot");
+			//Excelファイル保存
+			//saveXlsPath = outputPath + objName + "_" + MyUtils.getDateStr() +".xlsx";
+			saveXlsPath = outputPath + objName + "_test.xlsx";
+			MyUtils.SystemLogPrint("  XLSXファイル保存: " + saveXlsPath);
+			xlsx.save(saveXlsPath);
+			xlsx.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+			return e.toString();
+		}
+		
+		return null;
+	}
+	
+	//---------------------------------------
+	//メール添付送信        
+	//---------------------------------------
+	public String sendMail() {
+		String mailBody = "";
+        int maxRow = list.size();
+		if (maxRow > 1) {
+			mailBody = "件数: " + (maxRow-1);
+			mailBody = mailBody + getGroupShukei(list);
+		} else {
+			mailBody = "件数: 0";
+		}
 
+		String subject = "[" + sysName + "]完了連絡(" + objName + " " + MyUtils.getDate() + ")";
+		SendMail.execute(config, subject, mailBody, saveXlsPath);
+		
+		return null;
+	}
+	
     public String getGroupShukei(ArrayList<ArrayList<String>> list) {
 		int colIdx = 0;
     	String msg = "";
-		if (sys.equals(serv1) == true) {
+		if (sysName.equals(serv1) == true) {
 	        if (obj.equals("seisan") == true) {
 				colIdx = 28;
 			}
 		}
 		if (colIdx == 0) {
-			return msg;
+			return null;
 		}
         int maxRow = list.size();
 		String code;

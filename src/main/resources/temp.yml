@@ -1,3 +1,6 @@
+#server:
+#  port: 8090
+#
 spring:
   datasource:
     url: jdbc:oracle:thin:@localhost:1521:orcl
@@ -28,8 +31,8 @@ api:
     username: username
     password: password
   path:
-    templete_path: D:\pleiades\templete\
-    output_path: D:\pleiades\output\
+    templete_path: .\templete\
+    output_path: .\output\
 
 # SQLログ出力
 logging:

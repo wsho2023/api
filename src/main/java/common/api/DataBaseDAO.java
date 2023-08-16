@@ -11,15 +11,15 @@ import java.util.ArrayList;
 
 import com.example.demo.ApiConfig;
 
-public class ThSpotMikomiDAO {
+public class DataBaseDAO {
 	String DB_URL;
 	String DB_USER;
 	String DB_PASS;
 	String DB_DRIVER;
 	
-	String header[];
+	ArrayList<String> header;
 	
-	public ThSpotMikomiDAO(ApiConfig config) {
+	public DataBaseDAO(ApiConfig config) {
         //接続情報取得
 		DB_URL = config.getDBUrl();
 		DB_USER = config.getDBUsername();
@@ -28,25 +28,25 @@ public class ThSpotMikomiDAO {
 	}
 
 	// インスタンスオブジェクトの生成->返却（コードの簡略化）
-	public static ThSpotMikomiDAO getInstance(ApiConfig config) {
-		return new ThSpotMikomiDAO(config);
+	public static DataBaseDAO getInstance(ApiConfig config) {
+		return new DataBaseDAO(config);
 	}
 	
 	public String getHeaderTsv() {
 		String retStr = "";
 
-		for (int c=0; c<header.length-1; c++) {
-			retStr = retStr + header[c] + "\t";
+		for (int c=0; c<header.size()-1; c++) {
+			retStr = retStr + header.get(c) + "\t";
 		}
-		retStr = retStr + header[header.length-1] + "\r\n";
+		retStr = retStr + header.get(header.size()-1) + "\r\n";
 
 		return retStr;
 	}
-
-	public ArrayList<String> getDataTsv(String sql) throws SQLException {
+	
+	public ArrayList<ArrayList<String>> getData(String sql) throws SQLException {
 		//接続処理
 		Connection conn = null;
-		ArrayList<String> list = new ArrayList<String>();
+		ArrayList<ArrayList<String>> list = new ArrayList<ArrayList<String>>();
 		try {
 			Class.forName(DB_DRIVER);
 			conn = DriverManager.getConnection(DB_URL,DB_USER,DB_PASS);
@@ -61,27 +61,24 @@ public class ThSpotMikomiDAO {
     		System.out.println("カラム数：" + colNum);
     		
     		//ヘッダ格納
-    		header = new String[colNum];
+    		header = new ArrayList<String>();
     		System.out.print("ヘッダ: ");
     		for (int h=0; h<colNum; h++) {
-    			header[h] = meta.getColumnName(h+1);	//1始まり
-        		System.out.print(header[h] + " ");
+    			header.add(meta.getColumnName(h+1));//1始まり
+        		System.out.print(header.get(h) + " ");
     		}
-    		System.out.println();
-    		list.add(getHeaderTsv());
+    		System.out.println();		//改行
+    		list.add(header);
             
     		//データ格納
-            ThspotMikomiBean bean = null;
+			ArrayList<String> data = null;
     		while (rs.next()) {
-    			//Beanクラスを初期化
-    			bean = new ThspotMikomiBean(colNum);
-    			//Beanクラスへセット
-				for (int d=0; d<bean.data.length; d++) {
-					bean.data[d] = rs.getString(d+1);	//1始まり
+    			data = new ArrayList<String>();
+				for (int d=0; d<colNum; d++) {
+					data.add(rs.getString(d+1));	//1始まり
 				}
-            	// リストにBeanクラスごと格納
-    			list.add(bean.getDataTsv());
-    		}			
+    			list.add(data);
+    		}
 		//} catch(SQLException e) {
 		//	// エラーハンドリング
 		//	System.out.println("sql実行失敗");
@@ -103,7 +100,7 @@ public class ThSpotMikomiDAO {
 	}
 	
 	//https://confrage.jp/javaからプロシージャを呼び出す方法/
-	public void mikomiUpdate() throws SQLException {
+	public void update() throws SQLException {
         String sql = "CALL package.update";
     	
 		//接続処理

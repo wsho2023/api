@@ -21,6 +21,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.apache.poi.xssf.usermodel.XSSFPivotTable;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFTable;
 import org.apache.poi.xssf.usermodel.XSSFTableStyleInfo;
@@ -58,15 +59,30 @@ public class MyExcel {
 			book = WorkbookFactory.create(new File(xlsPath));
 	}
 	
-	public void newOpen(String sheetName) {
-		book = new XSSFWorkbook();	//OOXML(Office Open XML)形式のファイルフォーマット
-		if (sheetName == null)
-			sheet = (XSSFSheet) book.createSheet("sheet0");
-		else if (sheetName.equals("") == true)
-			sheet = (XSSFSheet) book.createSheet("sheet0");
-		else
-			sheet = (XSSFSheet) book.createSheet(sheetName);
-		
+	public void open(String xlsPath, String sheetName) throws IOException {
+		//new
+		if (xlsPath == null) {
+			book = new XSSFWorkbook();	//OOXML(Office Open XML)形式のファイルフォーマット
+			
+			if (sheetName == null)
+				sheet = (XSSFSheet) book.createSheet("sheet0");
+			else if (sheetName.equals("") == true)
+				sheet = (XSSFSheet) book.createSheet("sheet0");
+			else
+				sheet = (XSSFSheet) book.createSheet(sheetName);
+		//open
+		} else {
+			try {
+				book = new XSSFWorkbook(new File(xlsPath));
+			} catch (InvalidFormatException e) {
+				e.printStackTrace();
+			}
+			
+			if (sheetName == null)
+				sheet = (XSSFSheet)book.getSheetAt(0);
+			else
+				sheet = (XSSFSheet)book.getSheet(sheetName);
+		}
 		setCellStyle();
 	}
 
@@ -289,6 +305,106 @@ public class MyExcel {
 		return strValue;
 	}
 
+	public void setColFormat(String[][] argColFormat) {
+		colFormat = new String[argColFormat.length][];
+		colFormat = argColFormat;
+	}
+	
+	//listデータ（2次元）をExcelに書き出し(1行目はヘッダ行)
+	public int writeData(String sheetName, ArrayList<ArrayList<String>> list, boolean tableFlag) {
+        final var tableSheet = (XSSFSheet) book.getSheet(sheetName);
+		if (tableSheet == null) {
+			System.err.println("sheetName: " + sheetName + " error!");
+			return -1;
+		}
+		
+        int maxRow = list.size();
+		int maxCol = list.get(0).size();
+		String strValue;
+		int rowIdx = 0;
+		//ヘッダ行
+		row = tableSheet.createRow(rowIdx);			//行の生成
+		for (int colIdx=0; colIdx<maxCol; colIdx++) {
+			strValue = list.get(rowIdx).get(colIdx);
+			cell = row.createCell(colIdx);
+			cell.setCellStyle(textStyle);
+			cell.setCellValue(strValue);
+		}
+		//データ行
+		boolean matchFlag = false;
+		for (rowIdx=1; rowIdx<maxRow; rowIdx++) {
+			row = tableSheet.createRow(rowIdx);		//行の生成
+			for (int colIdx=0; colIdx<maxCol; colIdx++) {
+				strValue = list.get(rowIdx).get(colIdx);
+				cell = row.createCell(colIdx);
+				matchFlag = false;
+				for (String[] calFmt: colFormat) {
+					if (Integer.parseInt(calFmt[0]) == colIdx) {
+						if (calFmt[1].equals("SURYO")) {
+							try {
+								int tmpVal = Integer.parseInt(strValue);
+								cell.setCellStyle(suryoStyle);
+								cell.setCellValue(tmpVal);
+							} catch(NumberFormatException e) {
+								System.err.println("変換NG: " + strValue);
+								cell.setCellValue(strValue);
+							}
+							//System.out.println(calFmt[1] + ":" + strValue);
+							matchFlag = true;
+							break;
+						} else if (calFmt[1].equals("TANKA")) {
+							try {
+								double tmpVal = Double.parseDouble(strValue);
+								cell.setCellStyle(tankaStyle);
+								cell.setCellValue(tmpVal);
+							} catch(NumberFormatException e) {
+								System.err.println("変換NG: " + strValue);
+								cell.setCellValue(strValue);
+							}
+							//System.out.println(calFmt[1] + ":" + strValue);
+							matchFlag = true;
+							break;
+						} else if (calFmt[1].equals("KINGAKU")) {
+							try {
+								int tmpVal = Integer.parseInt(strValue);
+								cell.setCellStyle(kingakuStyle);
+								cell.setCellValue(tmpVal);
+							} catch(NumberFormatException e) {
+								System.err.println("変換NG: " + strValue);
+								cell.setCellValue(strValue);
+							}
+							//System.out.println(calFmt[1] + ":" + strValue);
+							matchFlag = true;
+							break;
+						} else if (calFmt[1].equals("TEXT")) {
+							cell.setCellStyle(textStyle);
+							cell.setCellValue(strValue);
+							//System.out.println(calFmt[1] + ":" + strValue);
+							matchFlag = true;
+							break;
+						} 
+					}
+				}
+				if (matchFlag == false) {
+					cell.setCellStyle(textStyle);
+					cell.setCellValue(strValue);
+					//System.out.println("TEXT:" + strValue);
+				}
+			} //colIdx
+		} //rowIdx
+		
+		if (tableFlag == true) {
+			List<XSSFTable> tableList = tableSheet.getTables();
+			if (tableList.size() == 0) {
+				createTable(sheetName, 0, 0, (maxRow-1), (maxCol-1));	//テーブル新規作成
+			} else {
+				refreshTable(sheetName, 0, 0, (maxRow-1), (maxCol-1));	//同名で作成しなおし
+			}
+			//sheet.removeTable(table);	//既存テーブル削除
+		}
+		return 0;
+	}
+	
 	//指定したシート名と指定範囲をテーブル化
 	public int createTable(String tableName, int r_s, int c_s, int r_e, int c_e) {
         final var sheet = (XSSFSheet) book.getSheet(tableName);
@@ -373,103 +489,23 @@ public class MyExcel {
 		return 0;
 	}
 	
-	public void setColFormat(String[][] argColFormat) {
-		colFormat = new String[argColFormat.length][];
-		colFormat = argColFormat;
-	}
-	
-	//listデータ（2次元）をExcelに書き出し
-	public int writeData(String sheetName, ArrayList<ArrayList<String>> list, boolean tableFlag) {
-        final var sheet = (XSSFSheet) book.getSheet(sheetName);
-		if (sheet == null) {
+	//https://stackoverflow.com/questions/1010673/refresh-pivot-table-with-apache-poi
+	public int refreshPivot(String sheetName) {
+	    final var pivotSheet = (XSSFSheet) book.getSheet(sheetName);
+		if (pivotSheet == null) {
 			System.err.println("sheetName: " + sheetName + " error!");
 			return -1;
 		}
- 
-        int maxRow = list.size();
-		int maxCol = list.get(0).size();
-		String strValue;
-		int rowIdx = 0;
-		//ヘッダ行
-		row = sheet.createRow(rowIdx);			//行の生成
-		for (int colIdx=0; colIdx<maxCol; colIdx++) {
-			strValue = list.get(rowIdx).get(colIdx);
-			cell = row.createCell(colIdx);
-			cell.setCellStyle(textStyle);
-			cell.setCellValue(strValue);
+		List<XSSFPivotTable> pivotList = pivotSheet.getPivotTables();
+		//if (pivotList.size() != 0) {
+		//	XSSFPivotTable pivotTable = pivotSheet.getPivotTables().get(0);     
+		//	pivotTable.getPivotCacheDefinition().getCTPivotCacheDefinition().setRefreshOnLoad(true);			
+		//}
+		//シート上に複数ある場合は、全部refresh
+		for (XSSFPivotTable pivot: pivotList) {
+			pivot.getPivotCacheDefinition().getCTPivotCacheDefinition().setRefreshOnLoad(true);
 		}
-		//データ行
-		boolean matchFlag = false;
-		for (rowIdx=1; rowIdx<maxRow; rowIdx++) {
-			row = sheet.createRow(rowIdx);		//行の生成
-			for (int colIdx=0; colIdx<maxCol; colIdx++) {
-				strValue = list.get(rowIdx).get(colIdx);
-				cell = row.createCell(colIdx);
-				matchFlag = false;
-				for (String[] calFmt: colFormat) {
-					if (Integer.parseInt(calFmt[0]) == colIdx) {
-						if (calFmt[1].equals("SURYO")) {
-							try {
-								int tmpVal = Integer.parseInt(strValue);
-								cell.setCellStyle(suryoStyle);
-								cell.setCellValue(tmpVal);
-							} catch(NumberFormatException e) {
-								System.err.println("変換NG: " + strValue);
-								cell.setCellValue(strValue);
-							}
-							//System.out.println(calFmt[1] + ":" + strValue);
-							matchFlag = true;
-							break;
-						} else if (calFmt[1].equals("TANKA")) {
-							try {
-								double tmpVal = Double.parseDouble(strValue);
-								cell.setCellStyle(tankaStyle);
-								cell.setCellValue(tmpVal);
-							} catch(NumberFormatException e) {
-								System.err.println("変換NG: " + strValue);
-								cell.setCellValue(strValue);
-							}
-							//System.out.println(calFmt[1] + ":" + strValue);
-							matchFlag = true;
-							break;
-						} else if (calFmt[1].equals("KINGAKU")) {
-							try {
-								int tmpVal = Integer.parseInt(strValue);
-								cell.setCellStyle(kingakuStyle);
-								cell.setCellValue(tmpVal);
-							} catch(NumberFormatException e) {
-								System.err.println("変換NG: " + strValue);
-								cell.setCellValue(strValue);
-							}
-							//System.out.println(calFmt[1] + ":" + strValue);
-							matchFlag = true;
-							break;
-						} else if (calFmt[1].equals("TEXT")) {
-							cell.setCellStyle(textStyle);
-							cell.setCellValue(strValue);
-							//System.out.println(calFmt[1] + ":" + strValue);
-							matchFlag = true;
-							break;
-						} 
-					}
-				}
-				if (matchFlag == false) {
-					cell.setCellStyle(textStyle);
-					cell.setCellValue(strValue);
-					//System.out.println("TEXT:" + strValue);
-				}
-			} //colIdx
-		} //rowIdx
 		
-		if (tableFlag == true) {
-			List<XSSFTable> tableList = sheet.getTables();
-			if (tableList.size() == 0) {
-				createTable(sheetName, 0, 0, (maxRow-1), (maxCol-1));	//テーブル新規作成
-			} else {
-				refreshTable(sheetName, 0, 0, (maxRow-1), (maxCol-1));	//同名で作成しなおし
-			}
-			//sheet.removeTable(table);	//既存テーブル削除
-		}
 		return 0;
 	}
 }

@@ -1,26 +1,20 @@
 package com.example.demo;
 
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.ArrayList;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import common.api.ApiObjInfo;
-import common.api.ThSpotMikomiDAO;
-import common.backup.ScanBackupFile;
-import common.utils.MyExcel;
-import common.utils.MyFiles;
-import common.utils.MyMail;
-import common.utils.MyUtils;
-import common.utils.WebApi;
+import common.api.BakObjInfo;
+import common.api.DbObjInfo;
+import common.api.ShukeiObjInfo;
+import jakarta.servlet.http.HttpServletResponse;
 
 @SpringBootApplication
 @RestController	//★これが絶対必要！
@@ -43,283 +37,27 @@ public class ApiApplication extends SpringBootServletInitializer {
     @PostMapping(serv1)
     public String serv1Post(@RequestParam("obj") String obj) {
     //----------------------------------------------------------------------
-		String sysName = serv1;
-		System.out.println(sysName + " obj: " + obj);
-		String objFile = "";
-		String mailBody = "";
-		String url = "";
-        if (obj == null) {
-			String msg = "Object指定なし";
-        	return msg;
-        }
-    	ApiObjInfo def = new ApiObjInfo(sysName, obj);
-		url = def.getUrl();
-		MyUtils.SystemLogPrint("url " + url);
-		objFile = def.getObjeFile();
-        if (url == null) {
-			String msg = "対象Object処理なし";
-        	return msg;
-        }
-
-		//String outputPath = config.getPathOutputPath();
-		String outputPath = ".\\output\\";
-		String saveTxtPath = outputPath + obj + ".tsv";
-		//---------------------------------------
-		//HTTP request process
-		//---------------------------------------
-/*		WebApi api = new WebApi();
-		api.setUrl("GET", url);
-		int res = -1;
-		try {
-            //既存ファイルがあれば削除
-			MyFiles.existsDelete(saveTxtPath);
-			//データダウンロード
-			res = api.download(saveTxtPath);
-		} catch (IOException e) {
-			e.printStackTrace();
-			String msg = e.getMessage();
-        	return msg;
-		}
-        if (res != 200) {	//HttpURLConnection.HTTP_OK: 200
-			String msg = "HTTP Connection Failed: " + res;
-	        MyUtils.SystemErrPrint(msg);
-        	return msg;
-		}*/ 
-
-		//---------------------------------------
-		//TSVファイル読み込み
-		//---------------------------------------
-        ArrayList<ArrayList<String>> list = null;
-		try {
-			list = MyFiles.parseTSV(saveTxtPath, "UTF-8");	//or "SJIS"
-		} catch (IOException e) {
-			e.printStackTrace();
-			//String msg = e.getMessage();
-			String msg = e.toString();
-        	return msg;
-		}
-
-		//---------------------------------------
-		//1. Excelに書き出し
-		//---------------------------------------
-		//String templePath = config.getPathTempletePath();
-		String templePath = ".\\output\\";
-        String defXlsPath = templePath + objFile + ".xlsx";
-        String saveXlsPath = "";
-		if (MyFiles.exists(defXlsPath) != true) {
-			MyUtils.SystemErrPrint("  " + objFile + "テンプレートファイルが見つかりませんでした");
-			MyUtils.SystemLogPrint("  Excel新規オープン... シート名: " + objFile);
-			MyExcel xlsx = new MyExcel();
-			try {
-				//Excelファイル新規オープン
-				xlsx.newOpen(objFile);
-				//データ転記、データ転記した範囲をテーブル化
-				xlsx.setColFormat(def.getColFormat());
-				xlsx.writeData(objFile, list, true);
-				//Excelファイル保存
-				//saveXlsPath = outputPath + objFile + "_" + MyUtils.getDateStr() +".xlsx";
-				saveXlsPath = outputPath + objFile + "_test.xlsx";
-				MyUtils.SystemLogPrint("  XLSXファイル保存: " + saveXlsPath);
-				xlsx.save(saveXlsPath);
-				xlsx.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-				String msg = e.getMessage();
-				return msg;
-			}
-			
-		} else {
-			//テンプレートから出力ファイル生成
-	        String tmpXlsPath = templePath + objFile + "_tmp.xlsx";
-			try {
-				MyFiles.copyOW(defXlsPath, tmpXlsPath);	//上書き
-			} catch (IOException e) {
-				e.printStackTrace();
-				String msg = e.getMessage();
-				return msg;
-			}
-			//---------------------------------------
-			//Excelオープン(XLSXのファイル読込)
-			//---------------------------------------
-			MyUtils.SystemLogPrint("  Excelオープン...: " + tmpXlsPath + " 種別: " + objFile);
-			MyExcel xlsx = new MyExcel();
-			try {
-				//Excelファイルオープン
-				xlsx.open(tmpXlsPath, objFile, false);
-				//データ転記、データ転記した範囲をテーブル化
-				xlsx.setColFormat(def.getColFormat());
-				xlsx.writeData(objFile, list, true);
-				
-				//Excelファイル保存
-				//saveXlsPath = outputPath + objFile + "_" + MyUtils.getDateStr() +".xlsx";
-				saveXlsPath = outputPath + objFile + "_test.xlsx";
-				MyUtils.SystemLogPrint("  XLSXファイル保存: " + saveXlsPath);
-				xlsx.save(saveXlsPath);
-				xlsx.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-				String msg = e.getMessage();
-				return msg;
-			}
-		}
-		
-		//---------------------------------------
-		//メール本文作成
-		//---------------------------------------
-        int maxRow = list.size();
-		if (maxRow > 1) {
-			mailBody = "件数: " + (maxRow-1);
-			mailBody = mailBody + def.getGroupShukei(list);
-		} else {
-			mailBody = "件数: 0";
-		}
-
-		//---------------------------------------
-		//2. メール添付送信        
-		//---------------------------------------
-		String subject = "[" + sysName + "]" + objFile + "連絡(" + MyUtils.getDate() + ")";
-		if (saveXlsPath.equals("") == true) {
-    		mailBody = mailBody + "\n添付ファイルなし";
-		}
-		sendnMailProcess(subject, mailBody, saveXlsPath);
+    	ApiObjInfo objInfo = new ApiObjInfo(config, serv1, obj);
+    	String msg = objInfo.makeObject();
+		if (msg != null) return msg;
+        
+        msg = objInfo.execute();
+		if (msg != null) return msg;
 		
         return "OK";
     }
-    
-	//------------------------------------------------------
-	//ファイル添付メール送信
-	//------------------------------------------------------
-	int sendnMailProcess(String subject, String body, String attach) {
-		MyMail mailConf;
-		mailConf = new MyMail();
-		mailConf.host = config.getMailHost();
-		mailConf.port = config.getMailPort();
-		mailConf.username = config.getMailUsername();
-		mailConf.password = config.getMailPassword();
-		mailConf.smtpAuth = config.getMailSmtpAuth();
-		mailConf.starttlsEnable = config.getMailSmtpStarttlsEnable();
-
-        mailConf.fmAddr = mailConf.username;
-        mailConf.toAddr = mailConf.fmAddr;	//for debug
-		mailConf.ccAddr = "";				//for debug
-		mailConf.bccAddr = "";				//for debug
-		mailConf.subject = subject;
-		mailConf.body = body;
-		mailConf.attach = attach;
-		
-		MyUtils.SystemLogPrint("  メール送信...");
-		MyUtils.SystemLogPrint("  MAIL FmAddr: " + mailConf.fmAddr);
-		MyUtils.SystemLogPrint("  MAIL ToAddr: " + mailConf.toAddr);
-		MyUtils.SystemLogPrint("  MAIL CcAddr: " + mailConf.ccAddr);
-		MyUtils.SystemLogPrint("  MAIL BcAddr: " + mailConf.bccAddr);
-		MyUtils.SystemLogPrint("  MAIL Subject: " + mailConf.subject);
-		MyUtils.SystemLogPrint("  MAIL Body: \n" + mailConf.body);
-		MyUtils.SystemLogPrint("  MAIL Attach: " + mailConf.attach);
-		//mailConf.sendRawMail();            
-		
-		return 0;
-	}
     
     //----------------------------------------------------------------------
 	final String serv2 = "hantei";
     @PostMapping(serv2)
     public String serv2Post(@RequestParam("obj") String obj) {
     //----------------------------------------------------------------------
-		String sysName = serv2;
-		System.out.println(sysName + " obj: " + obj);
-		String objFile = "";
-		String mailBody = "";
-		String url = "";
-        if (obj == null) {
-			String msg = "Object指定なし";
-        	return msg;
-        }
-		//curl -X POST "http://localhost:8080/hantei?obj=**"
-    	ApiObjInfo def = new ApiObjInfo(sysName, obj);
-		url = def.getUrl();
-		MyUtils.SystemLogPrint("url " + url);
-		objFile = def.getObjeFile();
-        if (url == null) {
-			String msg = "対象Object処理なし";
-        	return msg;
-        }
-
-		String outputPath = config.getPathOutputPath();
-		String saveTxtPath = outputPath + obj + ".tsv";
-		//---------------------------------------
-		//HTTP request process
-		//---------------------------------------
-		WebApi api = new WebApi();
-		api.setUrl("GET", url);
-		int res = -1;
-		try {
-            //既存ファイルがあれば削除
-			MyFiles.existsDelete(saveTxtPath);
-			//データダウンロード
-			res = api.download(saveTxtPath);
-		} catch (IOException e) {
-			e.printStackTrace();
-			String msg = e.getMessage();
-        	return msg;
-		}
-        if (res != 200) {	//HttpURLConnection.HTTP_OK: 200
-			String msg = "HTTP Connection Failed: " + res;
-	        MyUtils.SystemErrPrint(msg);
-        	return msg;
-        } 
-
-		//---------------------------------------
-		//TSVファイル読み込み
-		//---------------------------------------
-        ArrayList<ArrayList<String>> list = null;
-		try {
-			list = MyFiles.parseTSV(saveTxtPath, "UTF-8");	//or "SJIS"
-		} catch (IOException e) {
-			e.printStackTrace();
-			String msg = e.getMessage();
-        	return msg;
-		}
-
-		//---------------------------------------
-		//1. Excelに書き出し
-		//---------------------------------------
-        String saveXlsPath = "";
-		MyUtils.SystemLogPrint("  Excelオープン... シート名: " + objFile);
-		MyExcel xlsx = new MyExcel();
-		try {
-			//Excelファイルオープン
-			xlsx.newOpen(objFile);
-			//データ転記、データ転記した範囲をテーブル化
-			xlsx.writeData(objFile, list, true);
-			//Excelファイル保存
-			//saveXlsPath = outputPath + objFile + "_" + MyUtils.getDateStr() +".xlsx";
-			saveXlsPath = outputPath + objFile + "_test.xlsx";
-			MyUtils.SystemLogPrint("  XLSXファイル保存: " + saveXlsPath);
-			xlsx.save(saveXlsPath);
-			xlsx.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-			String msg = e.getMessage();
-			return msg;
-		}
-		//---------------------------------------
-		//メール本文作成
-		//---------------------------------------
-        int maxRow = list.size();
-        if (maxRow > 1) {
-			mailBody = "件数: " + (maxRow-1);
-	    } else {
-	    	mailBody = "件数: 0";
-	    }
-
-		//---------------------------------------
-		//2. メール添付送信        
-		//---------------------------------------
-		String subject = "[" + sysName + "]" + objFile + "連絡(" + MyUtils.getDate() + ")";
-		if (saveXlsPath.equals("") == true) {
-    		mailBody = mailBody + "\n添付ファイルなし";
-		}
-		sendnMailProcess(subject, mailBody, saveXlsPath);
+    	ApiObjInfo objInfo = new ApiObjInfo(config, serv2, obj);
+    	String msg = objInfo.makeObject();
+		if (msg != null) return msg;
+        
+        msg = objInfo.execute();
+		if (msg != null) return msg;
 		
         return "OK";
     }
@@ -329,272 +67,102 @@ public class ApiApplication extends SpringBootServletInitializer {
     @PostMapping(serv3)
     public String serv3Post(@RequestParam("obj") String obj) {
     //----------------------------------------------------------------------
-		String sysName = serv3;
-		System.out.println(sysName + " obj: " + obj);
-		String objFile = "";
-		String mailBody = "";
-		String url = "";
-        if (obj == null) {
-			String msg = "Object指定なし";
-        	return msg;
-        }
-		//curl -X POST "http://localhost:8080/hantei?obj=**"
-    	ApiObjInfo def = new ApiObjInfo(sysName, obj);
-		url = def.getUrl();
-		MyUtils.SystemLogPrint("url " + url);
-		objFile = def.getObjeFile();
-        if (url == null) {
-			String msg = "対象Object処理なし";
-        	return msg;
-        }
-
-		String outputPath = config.getPathOutputPath();
-		String saveTxtPath = outputPath + obj + ".tsv";
-		//---------------------------------------
-		//HTTP request process
-		//---------------------------------------
-		WebApi api = new WebApi();
-		api.setUrl("GET", url);
-		int res = -1;
-		try {
-            //既存ファイルがあれば削除
-			MyFiles.existsDelete(saveTxtPath);
-			//データダウンロード
-			res = api.download(saveTxtPath);
-		} catch (IOException e) {
-			e.printStackTrace();
-			String msg = e.getMessage();
-        	return msg;
-		}
-        if (res != 200) {	//HttpURLConnection.HTTP_OK: 200
-			String msg = "HTTP Connection Failed: " + res;
-	        MyUtils.SystemErrPrint(msg);
-        	return msg;
-        } 
-
-		//---------------------------------------
-		//TSVファイル読み込み
-		//---------------------------------------
-        ArrayList<ArrayList<String>> list = null;
-		try {
-			list = MyFiles.parseTSV(saveTxtPath, "UTF-8");	//or "SJIS"
-		} catch (IOException e) {
-			e.printStackTrace();
-			String msg = e.getMessage();
-        	return msg;
-		}
-		
-		//---------------------------------------
-		//1. Excelに書き出し
-		//---------------------------------------
-        String saveXlsPath = "";
-		MyUtils.SystemLogPrint("  Excelオープン... シート名: " + objFile);
-		MyExcel xlsx = new MyExcel();
-		try {
-			//Excelファイルオープン
-			xlsx.newOpen(objFile);
-			//データ転記、データ転記した範囲をテーブル化
-			xlsx.writeData(objFile, list, true);
-			//Excelファイル保存
-			//saveXlsPath = outputPath + objFile + "_" + MyUtils.getDateStr() +".xlsx";
-			saveXlsPath = outputPath + objFile + "_test.xlsx";
-			MyUtils.SystemLogPrint("  XLSXファイル保存: " + saveXlsPath);
-			xlsx.save(saveXlsPath);
-			xlsx.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-			String msg = e.getMessage();
-			return msg;
-		}
-		
-		//---------------------------------------
-		//メール本文作成
-		//---------------------------------------
-        int maxRow = list.size();
-        if (maxRow > 1) {
-			mailBody = "件数: " + (maxRow-1);
-	    } else {
-	    	mailBody = "件数: 0";
-	    }
-
-		//---------------------------------------
-		//2. メール添付送信        
-		//---------------------------------------
-		String subject = "[" + sysName + "]" + objFile + "連絡(" + MyUtils.getDate() + ")";
-		if (saveXlsPath.equals("") == true) {
-    		mailBody = mailBody + "\n添付ファイルなし";
-		}
-		sendnMailProcess(subject, mailBody, saveXlsPath);
+    	ApiObjInfo objInfo = new ApiObjInfo(config, serv3, obj);
+    	String msg = objInfo.makeObject();
+		if (msg != null) return msg;
+        
+        msg = objInfo.execute();
+		if (msg != null) return msg;
 		
         return "OK";
     }
     
     //----------------------------------------------------------------------
-    @PostMapping("thspot")
-    public String thspotPost(@RequestParam("obj") String obj) {
+    final String db = "db";
+    @PostMapping(db)
+    public String dbPost(@RequestParam("obj") String obj) {
     //----------------------------------------------------------------------
-		String sysName = "thspot";
-		System.out.println("/thspot obj: " + obj);
-		String objName = "";
-		String mailBody = "";
-        if (obj == null) {
-			String msg = "Object指定なし";
-        	return msg;
-        } else if (obj.equals("juchu") == true) {
-			//curl -X POST "http://localhost:8080/thspot?obj=juchu"
-			objName = "juchu集計";
-        } else if (obj.equals("update") == true) {
- 			//curl -X POST "http://localhost:8080/thspot?obj=update"
-        	try {
-				ThSpotMikomiDAO.getInstance(config).mikomiUpdate();
-			} catch (SQLException e) {
-				e.printStackTrace();
-				String msg = e.getMessage();
-				return msg;
-			}
-        	return "OK";
-        } else if (obj.equals("uriage") == true) {
- 			//curl -X POST "http://localhost:8080/thspot?obj=uriage"
-			objName = "uriage集計";
-        } else {
-			String msg = "対象Object処理なし";
-        	return msg;
-        }
-	    String sqlPath =  config.getPathTempletePath() + obj + ".sql";
-		String savePath = config.getPathOutputPath() + obj + ".tsv";
-		//---------------------------------------
-		//SQL取得
-		//---------------------------------------
-		String sql = "";
-		try {
-			sql = MyFiles.readAllText(sqlPath);
-		} catch (IOException e) {
-			e.printStackTrace();
-			String msg = e.getMessage();
-        	return msg;
-		}
-		
-		//---------------------------------------
-		//データ取得
-		//---------------------------------------
-		ThSpotMikomiDAO dao = new ThSpotMikomiDAO(config);
-		ArrayList<String> list = null;
-		try {
-			list = dao.getDataTsv(sql);
-		} catch (SQLException e) {
-			e.printStackTrace();
-			String msg = e.getMessage();
-			return msg;
-		}
-		if (list != null) {
-			try {
-			    MyFiles.WriteList2File(list, savePath);
-			} catch (IOException e) {
-				e.printStackTrace();
-				String msg = e.getMessage();
-				return msg;
-			}
-		} else {
-			String msg = "抽出データなし";
-			MyUtils.SystemErrPrint(msg);
-        	return msg;
-		}
-		
-		//---------------------------------------
-		//見込みデータBackUp
-		//---------------------------------------
-		/*ArrayList<String> list2 = null;
-		if (obj.equals("juchu") == true) {
-			list2 = new ArrayList<String>();
-			list2.add(list.get(0));		//ヘッダ
-	        int maxRow = list.size();
-			String bunruiFlag;
-			for (int rowIdx=1; rowIdx<maxRow; rowIdx++) {
-				bunruiFlag = list.get(rowIdx).substring(0, 1);
-				if (bunruiFlag.equals("0") == true || bunruiFlag.equals("1") == true) {
-					list2.add(list.get(rowIdx));
-				}
-			}
-		} else if (obj.equals("uriage") == true) {
-			list2 = new ArrayList<String>();
-			list2.add(list.get(0));		//ヘッダ
-	        int maxRow = list.size();
-			String bunruiFlag;
-			for (int rowIdx=1; rowIdx<maxRow; rowIdx++) {
-				bunruiFlag = list.get(rowIdx).substring(0, 1);
-				if (bunruiFlag.equals("0") == true || bunruiFlag.equals("1") == true) {
-					list2.add(list.get(rowIdx));
-				}
-			}
-		}
-		if (list2 != null) {
-			if (list2.size() != 0) {
-				String backPath = config.getPathOutputPath() + obj + "_bak_" + MyUtils.getDateStr() + ".tsv";
-				try {
-					MyFiles.WriteList2File(list2, backPath);
-				} catch (IOException e) {
-					e.printStackTrace();
-					String msg = e.getMessage();
-					return msg;
-				}
-			}
-		}*/
-		
-		//---------------------------------------
-		//2. メール添付送信        
-		//---------------------------------------
-		String subject = "[" + sysName + "]完了連絡(" + objName + " " + MyUtils.getDate() + ")";
-		sendnMailProcess(subject, mailBody, "");
+        DbObjInfo objInfo = new DbObjInfo(config, db, obj);
+    	String msg = objInfo.makeObject();
+		if (msg != null) return msg;
+        
+        msg = objInfo.execute();
+		if (msg != null) return msg;
 		
         return "OK";
     }
     
     //----------------------------------------------------------------------
-    @PostMapping("/backup")
+    final String shukei = "shukei";
+    @PostMapping(shukei)
+    public String shukeiPost(@RequestParam("obj") String obj) {
+    //----------------------------------------------------------------------
+    	ShukeiObjInfo objInfo = new ShukeiObjInfo(config, shukei, obj);
+    	String msg = objInfo.makeObject();
+		if (msg != null) return msg;
+        
+        msg = objInfo.execute();
+		if (msg != null) return msg;
+		
+        return "OK";
+    }
+    
+    //----------------------------------------------------------------------
+    @GetMapping(shukei)
+    public String shukeiGet(HttpServletResponse response, @RequestParam("obj") String obj) {
+    //----------------------------------------------------------------------
+    	ShukeiObjInfo objInfo = new ShukeiObjInfo(config, shukei, obj);
+    	String msg = objInfo.makeObject();
+		if (msg != null) return msg;
+        
+        msg = objInfo.download(response);
+		if (msg != null) return msg;
+		
+        return "OK";
+    }
+    
+    //----------------------------------------------------------------------
+    final String backup = "backup";
+    @PostMapping(backup)
     public String backupPost(@RequestParam("obj") String obj) {
     //----------------------------------------------------------------------
-    	String sysName = "backup";
-    	String targetPath;
-    	String backupPath;
-    	String objName;
-    	int days;
-        if (obj == null) {
-			String msg = "Object指定なし";
-        	return msg;
-        } else if (obj.equals("trace") == true) {
-        	//curl -X POST http://localhost:8080/backup?obj=trace
-        	targetPath = "D:\\\\pleiades\\upload\\done\\";
-        	backupPath = "D:\\\\pleiades\\upload\\done\\backup\\";
-        	days = 30;	//日
-        	objName = "trace";
-        } else if (obj.equals("online") == true) {
-        	//curl -X POST http://localhost:8080/backup?obj=online
-        	targetPath = "D:\\\\pleiades\\upload\\done\\";
-        	backupPath = "D:\\\\pleiades\\upload\\done\\backup\\";
-        	days = 30;	//日
-        	objName = "online";
-        } else {
-			String msg = "対象Object処理なし";
-        	return msg;
-        }
+    	BakObjInfo objInfo = new BakObjInfo(config, backup, obj);
+    	String msg = objInfo.makeObject();
+		if (msg != null) return msg;
         
-    	ScanBackupFile backup = new ScanBackupFile(targetPath, backupPath, days);
-    	backup.run();
-    	
-		//メール本文
-		String mailBody = "";
-		mailBody = mailBody + "スキャンパス: " + targetPath;
-		mailBody = mailBody + "\n削除対象: " + days + "日以上";
-		mailBody = mailBody + "\nトータルファイル数: " + backup.totalCount + "、削除数: " + backup.deleteCount;
-		mailBody = mailBody + "\nトータルファイルサイズ: " + backup.totalMbSize + "MB、削除サイズ: " + backup.deleteMbSize + "MB";
-		mailBody = mailBody + "\nバックアップ: " + backup.zipFilePath;
-		
-		//---------------------------------------
-		//2. メール添付送信        
-		//---------------------------------------
-		String subject = "[" + sysName + "]完了連絡(" + objName + " " + MyUtils.getDate() + ")";
-		sendnMailProcess(subject, mailBody, "");
+        msg = objInfo.execute();
+		if (msg != null) return msg;
 		
     	return "OK";
     }
+    
+    //テストファイルダウンロード
+    //curl -X GET "http://localhost:8080/daicho"
+    /* @GetMapping("daicho")
+    public void apiDaicho(HttpServletResponse response){
+		ArrayList<OcrDaichoBean> list;
+		try {
+	        list = OcrRirekiDAO.getInstance(config).getDaicho();
+	        
+			response.setContentType("text/tsv;charset=UTF8");
+			String fileName = new String("daicho.tsv".getBytes("UTF-8"), "ISO-8859-1");
+			response.setHeader("Content-Disposition", "attachment; filename=" + fileName);
+			PrintWriter writer = response.getWriter();
+  			String line;
+			//ヘッダ
+			line = "ID\t日時\tOCR\tNo\t取引先\t日付\t送付先\t注番\t品名\t数量\t単価\t金額\t備考\r\n";
+			writer.write(line);
+			//データ
+			for (int i=0; i<list.size(); i++) {
+				OcrDaichoBean dto = (OcrDaichoBean)list.get(i);
+	  			line = dto.getAllData();
+	  			writer.write(line);
+			}
+			writer.close();
+		} catch (IOException e) {
+			list = null;
+			e.printStackTrace();
+		}	
+    }*/
+    
 }
