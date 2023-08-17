@@ -18,6 +18,7 @@ public class ApiObjInfo {
 	final String serv3 = "kyaku";
 	
 	ApiConfig config;
+	String sys;
 	String sysName;
 	String obj;
 	String objName;
@@ -31,11 +32,12 @@ public class ApiObjInfo {
 	
 	public ApiObjInfo(ApiConfig argConfig, String argSys, String argObj) {
 		config = argConfig;
-        sysName = argSys;
+        sys = argSys;
+        sysName = null;
 		obj = argObj;
 		objName = null;
 		colFormat = null;
-		System.out.println("/" + sysName + " obj: " + obj);
+		System.out.println("/" + sys + " obj: " + obj);
 	}
 	
 	public String makeObject() {
@@ -45,6 +47,7 @@ public class ApiObjInfo {
 		String sort = "";
 		dlFlag = 0;	//ファイル出力
 		if (sysName.equals(serv1) == true) {
+			sysName = "kkk";
 			dlFlag = 0;	//ファイル出力
 	        if (obj.equals("juchzn") == true) {
 				//curl -X POST "http://localhost:8080/kkk?obj=juchzn"
@@ -92,6 +95,7 @@ public class ApiObjInfo {
 				objName = obj;
 	        }
 		} else if (sysName.equals(serv2) == true) {
+			sysName = "hantei";
 			dlFlag = 1;	//List読み込み
 	    	if (obj.equals("2") == true) {
 				String today = MyUtils.getToday();
@@ -101,6 +105,7 @@ public class ApiObjInfo {
 				objName = "hantei";
 			}
 		} else if (sysName.equals(serv3) == true) {
+			sysName = "kyaku";
 			dlFlag = 1;	//List読み込み
 	    	if (obj.equals("1") == true) {
 				String today = MyUtils.getToday();
@@ -156,8 +161,8 @@ public class ApiObjInfo {
 				String msg = e.toString();
 				return msg;
 			}
-			System.out.println("filterエンコード結果: " + encoded);
-			url = url + "&sort=" + sort;	//ソート(空白を含まないこと)
+			System.out.println("sortエンコード結果: " + encoded);
+			url = url + "&sort=" + encoded;	//ソート(空白を含まないこと)
 		}
 		return null;
 	}
@@ -215,7 +220,7 @@ public class ApiObjInfo {
         } else {
 			list = api.getListData();
         }
-		if (list == null) {
+		if (list.size() < 2) {
 			String msg = "抽出データなし";
 			MyUtils.SystemErrPrint(msg);
 			return msg;
@@ -252,13 +257,17 @@ public class ApiObjInfo {
 			xlsx.open(tmpXlsPath, objName);
 			//データ転記、データ転記した範囲をテーブル化
 			xlsx.setColFormat(colFormat);
-			xlsx.writeData(objName, list, true);
-			//xlsx.refreshPivot("pivot");
-			//Excelファイル保存
-			//saveXlsPath = outputPath + objName + "_" + MyUtils.getDateStr() +".xlsx";
-			saveXlsPath = outputPath + objName + "_test.xlsx";
-			MyUtils.SystemLogPrint("  XLSXファイル保存: " + saveXlsPath);
-			xlsx.save(saveXlsPath);
+			int err = xlsx.writeData(obj, list, true);
+			if (err == 0) {
+				//xlsx.refreshPivot("pivot");
+				//Excelファイル保存
+				//saveXlsPath = outputPath + objName + "_" + MyUtils.getDateStr() +".xlsx";
+				saveXlsPath = outputPath + objName + ".xlsx";
+				MyUtils.SystemLogPrint("  XLSXファイル保存: " + saveXlsPath);
+				xlsx.save(saveXlsPath);
+			} else {
+				saveXlsPath = null;	//添付ファイル無し
+			}
 			xlsx.close();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -281,7 +290,7 @@ public class ApiObjInfo {
 			mailBody = "件数: 0";
 		}
 
-		String subject = "[" + sysName + "]完了連絡(" + objName + " " + MyUtils.getDate() + ")";
+		String subject = "[" + sysName + "]連絡(" + objName + " " + MyUtils.getDate() + ")";
 		SendMail.execute(config, subject, mailBody, saveXlsPath);
 		
 		return null;
@@ -296,7 +305,7 @@ public class ApiObjInfo {
 			}
 		}
 		if (colIdx == 0) {
-			return null;
+			return "";	//未登録は、何も表示しない。
 		}
         int maxRow = list.size();
 		String code;

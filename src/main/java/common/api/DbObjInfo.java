@@ -11,6 +11,7 @@ import common.utils.MyUtils;
 
 public class DbObjInfo {
 	ApiConfig config;
+	String sys;
 	String sysName;
 	String obj;
 	String objName;
@@ -22,14 +23,16 @@ public class DbObjInfo {
 	
 	public DbObjInfo(ApiConfig argConfig, String argSys, String argObj) {
 		config = argConfig;
-        sysName = argSys;
+        sys = argSys;
+        sysName = null;
 		obj = argObj;
 		objName = null;
 		colFormat = null;
-		System.out.println("/" + sysName + " obj: " + obj);
+		System.out.println("/" + sys + " obj: " + obj);
 	}
 	
 	public String makeObject() {
+        sysName = "システム";
         if (obj.equals("juchu") == true) {
 			//curl -X POST "http://localhost:8080/thspot?obj=juchu"
         	objName = "juchu集計";
@@ -85,7 +88,6 @@ public class DbObjInfo {
 		//---------------------------------------
 		//データ取得
 		//---------------------------------------
-		String saveTxtPath = config.getPathOutputPath() + obj + ".tsv";
 		DataBaseDAO dao = new DataBaseDAO(config);
 		try {
 			list = dao.getData(sql);
@@ -93,11 +95,12 @@ public class DbObjInfo {
 			e.printStackTrace();
 			return e.toString();
 		}
-		if (list == null) {
+		if (list.size() < 2) {
 			String msg = "抽出データなし";
 			MyUtils.SystemErrPrint(msg);
 			return msg;
 		} else {
+			String saveTxtPath = config.getPathOutputPath() + obj + ".tsv";
 			try {
 				MyFiles.WriteList2File(list, saveTxtPath);
 			} catch (IOException e) {
@@ -163,7 +166,7 @@ public class DbObjInfo {
 	//---------------------------------------
 	public String sendMail() {
 		String mailBody = "";
-		String subject = "[" + sysName + "]完了連絡(" + objName + " " + MyUtils.getDate() + ")";
+		String subject = "[" + sysName + "]連絡(" + objName + " " + MyUtils.getDate() + ")";
 		SendMail.execute(config, subject, mailBody, saveXlsPath);
 		
 		return null;

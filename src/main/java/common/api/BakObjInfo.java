@@ -9,6 +9,7 @@ import common.utils.MyUtils;
 
 public class BakObjInfo {
 	ApiConfig config;
+	String sys;
 	String sysName;
 	String obj;
 	String objName;
@@ -21,11 +22,12 @@ public class BakObjInfo {
 	
 	public BakObjInfo(ApiConfig argConfig, String argSys, String argObj) {
 		config = argConfig;
-        sysName = argSys;
+        sys = argSys;
+        sysName = null;
 		obj = argObj;
 		objName = null;
 		colFormat = null;
-		System.out.println("/" + sysName + " obj: " + obj);
+		System.out.println("/" + sys + " obj: " + obj);
 	}
 	
 	public String makeObject() {
@@ -33,6 +35,7 @@ public class BakObjInfo {
 		String backupPath = "";
 		int days = 0;
 		
+        sysName = "Backup";
         if (obj.equals("trace") == true) {
         	//curl -X POST http://localhost:8080/backup?obj=trace
         	targetPath = "D:\\\\pleiades\\upload\\done\\";
@@ -46,11 +49,10 @@ public class BakObjInfo {
         	days = 30;	//日
         	objName = "online";
         } 
-        if (objName != null) {
-        	backup = new ScanBackupFile(targetPath, backupPath, days);
-        }
 		if (objName == null)
 			return "対象Object処理なし";
+		
+		backup = new ScanBackupFile(targetPath, backupPath, days);
 		
 		return null;
 	}
@@ -91,7 +93,7 @@ public class BakObjInfo {
 	//---------------------------------------
 	public String sendMail() {
 		String mailBody = "";
-		String subject = "[" + sysName + "]完了連絡(" + objName + " " + MyUtils.getDate() + ")";
+		String subject = "[" + sysName + "]連絡(" + objName + " " + MyUtils.getDate() + ")";
 		SendMail.execute(config, subject, mailBody, saveXlsPath);
 		
 		return null;

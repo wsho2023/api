@@ -13,7 +13,7 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 //ttps://www.javalife.jp/2023/06/23/java-apache-poiを使って、excelでピボットテーブルを作る/
-public class PoiTest {
+public class PoiPivot {
 	//ピボット集計用にデータを重複させる回数（データが重複しないと面白くないので、何回か作るｗ）
 	private static final int REPEAT = 3;
 	

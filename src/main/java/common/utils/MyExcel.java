@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
@@ -116,18 +117,34 @@ public class MyExcel {
         textStyle = (XSSFCellStyle)book.createCellStyle();
         textStyle.setDataFormat(format.getFormat("@"));
         textStyle.setFont(font);
-
+		textStyle.setBorderLeft(BorderStyle.THIN);
+		textStyle.setBorderRight(BorderStyle.THIN);
+		textStyle.setBorderTop(BorderStyle.THIN); 
+		textStyle.setBorderBottom(BorderStyle.THIN); 
+		
         suryoStyle = (XSSFCellStyle)book.createCellStyle();
         suryoStyle.setDataFormat(format.getFormat("#,##0_ "));
         suryoStyle.setFont(font);
+		suryoStyle.setBorderLeft(BorderStyle.THIN);
+		suryoStyle.setBorderRight(BorderStyle.THIN);
+		suryoStyle.setBorderTop(BorderStyle.THIN); 
+		suryoStyle.setBorderBottom(BorderStyle.THIN); 
         
         tankaStyle = (XSSFCellStyle)book.createCellStyle();
         tankaStyle.setDataFormat(format.getFormat("#,##0.00"));
         tankaStyle.setFont(font);
+		tankaStyle.setBorderLeft(BorderStyle.THIN);
+		tankaStyle.setBorderRight(BorderStyle.THIN);
+		tankaStyle.setBorderTop(BorderStyle.THIN); 
+		tankaStyle.setBorderBottom(BorderStyle.THIN); 
         
         kingakuStyle = (XSSFCellStyle)book.createCellStyle();
         kingakuStyle.setDataFormat(format.getFormat("#,##0"));
         kingakuStyle.setFont(font);
+		kingakuStyle.setBorderLeft(BorderStyle.THIN);
+		kingakuStyle.setBorderRight(BorderStyle.THIN);
+		kingakuStyle.setBorderTop(BorderStyle.THIN); 
+		kingakuStyle.setBorderBottom(BorderStyle.THIN); 
         
         //ヘッダ用Cell Styleの作成（センタリング、文字色 白）
 		Font font2 = book.createFont();
@@ -138,6 +155,10 @@ public class MyExcel {
 		headerStyle.setAlignment(HorizontalAlignment.CENTER);		//水平
 		headerStyle.setVerticalAlignment(VerticalAlignment.CENTER);	//垂直
 		headerStyle.setFont(font2);
+		headerStyle.setBorderLeft(BorderStyle.THIN);
+		headerStyle.setBorderRight(BorderStyle.THIN);
+		headerStyle.setBorderTop(BorderStyle.THIN); 
+		headerStyle.setBorderBottom(BorderStyle.THIN); 
 	}
 
 	public void setSheet(String string) {
@@ -306,6 +327,10 @@ public class MyExcel {
 	}
 
 	public void setColFormat(String[][] argColFormat) {
+		if (argColFormat == null) 
+			return;
+
+		//設定がある場合
 		colFormat = new String[argColFormat.length][];
 		colFormat = argColFormat;
 	}
@@ -319,6 +344,10 @@ public class MyExcel {
 		}
 		
         int maxRow = list.size();
+		if (maxRow < 2) {
+			System.err.println("書き込みデータ無し");
+			return -1;
+		}
 		int maxCol = list.get(0).size();
 		String strValue;
 		int rowIdx = 0;
@@ -338,51 +367,53 @@ public class MyExcel {
 				strValue = list.get(rowIdx).get(colIdx);
 				cell = row.createCell(colIdx);
 				matchFlag = false;
-				for (String[] calFmt: colFormat) {
-					if (Integer.parseInt(calFmt[0]) == colIdx) {
-						if (calFmt[1].equals("SURYO")) {
-							try {
-								int tmpVal = Integer.parseInt(strValue);
-								cell.setCellStyle(suryoStyle);
-								cell.setCellValue(tmpVal);
-							} catch(NumberFormatException e) {
-								System.err.println("変換NG: " + strValue);
+				if (colFormat != null) {
+					for (String[] calFmt: colFormat) {
+						if (Integer.parseInt(calFmt[0]) == colIdx) {
+							if (calFmt[1].equals("SURYO")) {
+								try {
+									int tmpVal = Integer.parseInt(strValue);
+									cell.setCellStyle(suryoStyle);
+									cell.setCellValue(tmpVal);
+								} catch(NumberFormatException e) {
+									System.err.println("変換NG: " + strValue);
+									cell.setCellValue(strValue);
+								}
+								//System.out.println(calFmt[1] + ":" + strValue);
+								matchFlag = true;
+								break;
+							} else if (calFmt[1].equals("TANKA")) {
+								try {
+									double tmpVal = Double.parseDouble(strValue);
+									cell.setCellStyle(tankaStyle);
+									cell.setCellValue(tmpVal);
+								} catch(NumberFormatException e) {
+									System.err.println("変換NG: " + strValue);
+									cell.setCellValue(strValue);
+								}
+								//System.out.println(calFmt[1] + ":" + strValue);
+								matchFlag = true;
+								break;
+							} else if (calFmt[1].equals("KINGAKU")) {
+								try {
+									int tmpVal = Integer.parseInt(strValue);
+									cell.setCellStyle(kingakuStyle);
+									cell.setCellValue(tmpVal);
+								} catch(NumberFormatException e) {
+									System.err.println("変換NG: " + strValue);
+									cell.setCellValue(strValue);
+								}
+								//System.out.println(calFmt[1] + ":" + strValue);
+								matchFlag = true;
+								break;
+							} else if (calFmt[1].equals("TEXT")) {
+								cell.setCellStyle(textStyle);
 								cell.setCellValue(strValue);
-							}
-							//System.out.println(calFmt[1] + ":" + strValue);
-							matchFlag = true;
-							break;
-						} else if (calFmt[1].equals("TANKA")) {
-							try {
-								double tmpVal = Double.parseDouble(strValue);
-								cell.setCellStyle(tankaStyle);
-								cell.setCellValue(tmpVal);
-							} catch(NumberFormatException e) {
-								System.err.println("変換NG: " + strValue);
-								cell.setCellValue(strValue);
-							}
-							//System.out.println(calFmt[1] + ":" + strValue);
-							matchFlag = true;
-							break;
-						} else if (calFmt[1].equals("KINGAKU")) {
-							try {
-								int tmpVal = Integer.parseInt(strValue);
-								cell.setCellStyle(kingakuStyle);
-								cell.setCellValue(tmpVal);
-							} catch(NumberFormatException e) {
-								System.err.println("変換NG: " + strValue);
-								cell.setCellValue(strValue);
-							}
-							//System.out.println(calFmt[1] + ":" + strValue);
-							matchFlag = true;
-							break;
-						} else if (calFmt[1].equals("TEXT")) {
-							cell.setCellStyle(textStyle);
-							cell.setCellValue(strValue);
-							//System.out.println(calFmt[1] + ":" + strValue);
-							matchFlag = true;
-							break;
-						} 
+								//System.out.println(calFmt[1] + ":" + strValue);
+								matchFlag = true;
+								break;
+							} 
+						}
 					}
 				}
 				if (matchFlag == false) {

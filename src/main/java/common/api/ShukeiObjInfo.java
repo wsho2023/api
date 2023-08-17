@@ -17,6 +17,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 public class ShukeiObjInfo {
 	ApiConfig config;
+	String sys;
 	String sysName;
 	String obj;
 	String objName;
@@ -25,29 +26,27 @@ public class ShukeiObjInfo {
 	String templePath;
 	String outputPath;
     String saveXlsPath;
+	ArrayList<String> objList;
+	ArrayList<ArrayList<ArrayList<String>>> listList;	//ArrayList<ArrayList<String>> x n個
 	
 	public ShukeiObjInfo(ApiConfig argConfig, String argSys, String argObj) {
 		config = argConfig;
-        sysName = argSys;
+        sys = argSys;
+        sysName = null;
 		obj = argObj;
 		objName = null;
 		colFormat = null;
-		System.out.println("/" + sysName + " obj: " + obj);
+		System.out.println("/" + sys + " obj: " + obj);
 	}
 	
 	public String makeObject() {
+        sysName = "システム";
         if (obj.equals("jisseki") == true) {
 			//curl -X POST "http://localhost:8080/shukei?obj=jisseki"
-			objName = "jisseki";
-        } else if (obj.equals("meisai") == true) {
-			//curl -X POST "http://localhost:8080/shukei?obj=meisai"
-			objName = "meisai";
-        } else if (obj.equals("tonyu") == true) {
-			//curl -X POST "http://localhost:8080/shukei?obj=tonyu"
-			objName = "tonyu";
-        } else if (obj.equals("daicho") == true) {
-        	//curl -X POST "http://localhost:8080/shukei?obj=daicho"
 			objName = obj;
+			objList = new ArrayList<String>();
+			objList.add("jisseki1");
+			objList.add("jisseki2");
 	        String[][] format = {
 	        		{"9", "SURYO"},
 	        		{"10", "TANKA"},
@@ -55,7 +54,34 @@ public class ShukeiObjInfo {
 	        };
 			colFormat = new String[format.length][];
 			colFormat = format;
-        }
+        } else if (obj.equals("meisai") == true) {
+			//curl -X POST "http://localhost:8080/shukei?obj=meisai"
+			objName = obj;
+			objList = new ArrayList<String>();
+			objList.add(obj);
+	        String[][] format = {
+	        		{"9", "SURYO"},
+	        		{"10", "TANKA"},
+	        		{"11", "KINGAKU"},
+	        };
+			colFormat = new String[format.length][];
+			colFormat = format;
+        } else if (obj.equals("tonyu") == true) {
+			//curl -X POST "http://localhost:8080/shukei?obj=tonyu"
+			objName = "tonyu";
+			objList = new ArrayList<String>();
+			objList.add("shinki");
+			objList.add("nouki1");
+			objList.add("henkou");
+			objList.add("nouki2");
+	        String[][] format = {
+	        		{"9", "SURYO"},
+	        		{"10", "TANKA"},
+	        		{"11", "KINGAKU"},
+	        };
+			colFormat = new String[format.length][];
+			colFormat = format;
+        } 
 		if (objName == null)
 			return "対象Object処理なし";
 		
@@ -63,8 +89,14 @@ public class ShukeiObjInfo {
 	}
 	
 	public String execute() {
-        String msg = getDataDB();	//データ取得
-		if (msg != null) return msg;
+		String msg;
+    	listList = new ArrayList<ArrayList<ArrayList<String>>>();
+		for (String obj: objList) {
+			msg = getDataDB(obj);	//データ取得
+			if (msg != null) return msg;
+			listList.add(list);
+			list = null;
+		}
 		
 		msg = makeExcel();			//Excelに書き出し
 		if (msg != null) return msg;
@@ -76,8 +108,14 @@ public class ShukeiObjInfo {
 	}
 	
 	public String download(HttpServletResponse response) {
-        String msg = getDataDB();	//データ取得
-		if (msg != null) return msg;
+		String msg;
+    	listList = new ArrayList<ArrayList<ArrayList<String>>>();
+		for (String obj: objList) {
+			msg = getDataDB(obj);	//データ取得
+			if (msg != null) return msg;
+			listList.add(list);
+			list = null;
+		}
 		
 		msg = makeExcel();			//Excelに書き出し
 		if (msg != null) return msg;
@@ -102,7 +140,7 @@ public class ShukeiObjInfo {
 	//---------------------------------------
 	//データ取得
 	//---------------------------------------
-	public String getDataDB() {
+	public String getDataDB(String obj) {
 		//---------------------------------------
 		//SQL取得
 		//---------------------------------------
@@ -125,7 +163,7 @@ public class ShukeiObjInfo {
 			e.printStackTrace();
 			return e.toString();
 		}
-		if (list == null) {
+		if (list.size() < 2) {
 			String msg = "抽出データなし";
 			MyUtils.SystemErrPrint(msg);
 			return msg;
@@ -158,7 +196,7 @@ public class ShukeiObjInfo {
 	public String makeExcel() {
 		templePath = config.getPathTempletePath();
 		outputPath = config.getPathOutputPath();
-        String defXlsPath = templePath + objName + ".xlsx";
+        String defXlsPath = templePath + objName + "_org.xlsx";
         String tmpXlsPath = null;
 		if (MyFiles.exists(defXlsPath) != true) {
 			tmpXlsPath = null;	//新規作成
@@ -179,12 +217,16 @@ public class ShukeiObjInfo {
 			//Excelファイルオープン(tmpXlsPath=nullなら、新規作成)
 			xlsx.open(tmpXlsPath, objName);
 			//データ転記、データ転記した範囲をテーブル化
-			xlsx.setColFormat(colFormat);
-			xlsx.writeData(objName, list, true);
+			int i = 0;
+			for (ArrayList<ArrayList<String>> list: listList) {
+				xlsx.setColFormat(colFormat);
+				xlsx.writeData(objList.get(i), list, true);
+				i++;
+			}
 			xlsx.refreshPivot("pivot");
 			//Excelファイル保存
 			//saveXlsPath = outputPath + objName + "_" + MyUtils.getDateStr() +".xlsx";
-			saveXlsPath = outputPath + objName + "_test.xlsx";
+			saveXlsPath = outputPath + objName + ".xlsx";
 			MyUtils.SystemLogPrint("  XLSXファイル保存: " + saveXlsPath);
 			xlsx.save(saveXlsPath);
 			xlsx.close();
@@ -201,7 +243,7 @@ public class ShukeiObjInfo {
 	//---------------------------------------
 	public String sendMail() {
 		String mailBody = "";
-		String subject = "[" + sysName + "]完了連絡(" + objName + " " + MyUtils.getDate() + ")";
+		String subject = "[" + sysName + "]連絡(" + objName + " " + MyUtils.getDate() + ")";
 		SendMail.execute(config, subject, mailBody, saveXlsPath);
 		
 		return null;

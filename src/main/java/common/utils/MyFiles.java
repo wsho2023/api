@@ -201,9 +201,9 @@ public class MyFiles {
 			//タブ区切り1行文字列(+改行)を作成
 			line = "";
 			for (int c=0; c<colLen-1; c++) {
-				line = line + list.get(c) + "\t";
+				line = line + list.get(r).get(c) + "\t";
 			}
-			line = line + list.get(colLen-1) + "\r\n";
+			line = line + list.get(r).get(colLen-1) + "\r\n";
   			filewriter.write(line);
 		}
 		filewriter.close();

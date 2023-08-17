@@ -35,7 +35,7 @@ public class MyUtils {
 	        //Date型の持つ日時を表示
 	        //System.out.println(date);
 	        //Date型の持つ日時の4年後を表示(日時の加算/減算)
-	        calendar.add(Calendar.YEAR, day);
+	        calendar.add(Calendar.DAY_OF_MONTH, day);
 	        date = calendar.getTime();
 	        //System.out.println(date);
 		}
