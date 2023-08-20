@@ -2,9 +2,6 @@ package common.api;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
@@ -26,8 +23,10 @@ public class ShukeiObjInfo {
 	String templePath;
 	String outputPath;
     String saveXlsPath;
+    SendMail sendMail;
 	ArrayList<String> objList;
 	ArrayList<ArrayList<ArrayList<String>>> listList;	//ArrayList<ArrayList<String>> x n個
+	ArrayList<String[][]> colFmtList;
 	
 	public ShukeiObjInfo(ApiConfig argConfig, String argSys, String argObj) {
 		config = argConfig;
@@ -37,6 +36,7 @@ public class ShukeiObjInfo {
 		objName = null;
 		colFormat = null;
 		System.out.println("/" + sys + " obj: " + obj);
+		sendMail = new SendMail(config);
 	}
 	
 	public String makeObject() {
@@ -47,25 +47,44 @@ public class ShukeiObjInfo {
 			objList = new ArrayList<String>();
 			objList.add("jisseki1");
 			objList.add("jisseki2");
-	        String[][] format = {
-	        		{"9", "SURYO"},
-	        		{"10", "TANKA"},
-	        		{"11", "KINGAKU"},
+	        String[][] format1 = {
+        		{"1", "DATETIME"},
+        		{"5", "DATE"},
+        		{"9", "SURYO"},
+        		{"10", "TANKA"},
+        		{"11", "KINGAKU"},
+        		{"12", "DATE"},
 	        };
-			colFormat = new String[format.length][];
-			colFormat = format;
+	        String[][] format2 = {
+        		{"1", "DATETIME"},
+        		{"5", "DATE"},
+        		{"9", "SURYO"},
+        		{"10", "TANKA"},
+        		{"11", "KINGAKU"},
+        		{"12", "DATE"},
+	        };
+			//colFormat = new String[format.length][];
+	        //colFormat = format;
+			colFmtList = new ArrayList<String[][]>();
+			colFmtList.add(format1);
+			colFmtList.add(format2);
         } else if (obj.equals("meisai") == true) {
 			//curl -X POST "http://localhost:8080/shukei?obj=meisai"
 			objName = obj;
 			objList = new ArrayList<String>();
 			objList.add(obj);
 	        String[][] format = {
-	        		{"9", "SURYO"},
-	        		{"10", "TANKA"},
-	        		{"11", "KINGAKU"},
+        		{"1", "DATETIME"},
+        		{"5", "DATE"},
+        		{"9", "SURYO"},
+        		{"10", "TANKA"},
+        		{"11", "KINGAKU"},
+        		{"12", "DATE"},
 	        };
-			colFormat = new String[format.length][];
-			colFormat = format;
+			//colFormat = new String[format.length][];
+	        //colFormat = format;
+			colFmtList = new ArrayList<String[][]>();
+			colFmtList.add(format);
         } else if (obj.equals("tonyu") == true) {
 			//curl -X POST "http://localhost:8080/shukei?obj=tonyu"
 			objName = "tonyu";
@@ -75,9 +94,12 @@ public class ShukeiObjInfo {
 			objList.add("henkou");
 			objList.add("nouki2");
 	        String[][] format = {
-	        		{"9", "SURYO"},
-	        		{"10", "TANKA"},
-	        		{"11", "KINGAKU"},
+        		{"1", "DATETIME"},
+        		{"5", "DATE"},
+        		{"9", "SURYO"},
+        		{"10", "TANKA"},
+        		{"11", "KINGAKU"},
+        		{"12", "DATE"},
 	        };
 			colFormat = new String[format.length][];
 			colFormat = format;
@@ -121,14 +143,13 @@ public class ShukeiObjInfo {
 		if (msg != null) return msg;
 		
         try (OutputStream os = response.getOutputStream();) {
-        	Path p = Paths.get(saveXlsPath);
         	String fileName = MyFiles.getFileName(saveXlsPath);
-            byte[] fb1 = Files.readAllBytes(p);
+            byte[] fb = MyFiles.readAllBytes(saveXlsPath);
             
             response.setContentType("application/octet-stream");
             response.setHeader("Content-Disposition", "attachment; filename=" + fileName);
-            response.setContentLength(fb1.length);
-            os.write(fb1);
+            response.setContentLength(fb.length);
+            os.write(fb);
             os.flush();
         } catch (IOException e) {
             e.printStackTrace();
@@ -219,7 +240,7 @@ public class ShukeiObjInfo {
 			//データ転記、データ転記した範囲をテーブル化
 			int i = 0;
 			for (ArrayList<ArrayList<String>> list: listList) {
-				xlsx.setColFormat(colFormat);
+				xlsx.setColFormat(colFmtList.get(i));
 				xlsx.writeData(objList.get(i), list, true);
 				i++;
 			}
@@ -244,7 +265,7 @@ public class ShukeiObjInfo {
 	public String sendMail() {
 		String mailBody = "";
 		String subject = "[" + sysName + "]連絡(" + objName + " " + MyUtils.getDate() + ")";
-		SendMail.execute(config, subject, mailBody, saveXlsPath);
+		sendMail.execute(subject, mailBody, saveXlsPath);
 		
 		return null;
 	}

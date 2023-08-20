@@ -18,6 +18,7 @@ public class BakObjInfo {
 	String templePath;
 	String outputPath;
     String saveXlsPath;
+    SendMail sendMail;
     ScanBackupFile backup;
 	
 	public BakObjInfo(ApiConfig argConfig, String argSys, String argObj) {
@@ -28,6 +29,7 @@ public class BakObjInfo {
 		objName = null;
 		colFormat = null;
 		System.out.println("/" + sys + " obj: " + obj);
+		sendMail = new SendMail(config);
 	}
 	
 	public String makeObject() {
@@ -94,7 +96,7 @@ public class BakObjInfo {
 	public String sendMail() {
 		String mailBody = "";
 		String subject = "[" + sysName + "]連絡(" + objName + " " + MyUtils.getDate() + ")";
-		SendMail.execute(config, subject, mailBody, saveXlsPath);
+		sendMail.execute(subject, mailBody, saveXlsPath);
 		
 		return null;
 	}

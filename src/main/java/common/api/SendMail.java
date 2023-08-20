@@ -6,18 +6,22 @@ import common.utils.MyMail;
 import common.utils.MyUtils;
 
 public class SendMail {
-	//------------------------------------------------------
-	//ファイル添付メール送信メソッド
-	//------------------------------------------------------
-	static void execute(ApiConfig config, String subject, String body, String attach) {
-		MyMail mailConf = new MyMail();
+	MyMail mailConf;
+	
+	public SendMail(ApiConfig config) {
+		mailConf = new MyMail();
 		mailConf.host = config.getMailHost();
 		mailConf.port = config.getMailPort();
 		mailConf.username = config.getMailUsername();
 		mailConf.password = config.getMailPassword();
 		mailConf.smtpAuth = config.getMailSmtpAuth();
 		mailConf.starttlsEnable = config.getMailSmtpStarttlsEnable();
-
+	}
+	
+	//------------------------------------------------------
+	//ファイル添付メール送信
+	//------------------------------------------------------
+	public int execute(String subject, String body, String attach) {
         mailConf.fmAddr = mailConf.username;
         mailConf.toAddr = mailConf.fmAddr;	//for debug
 		mailConf.ccAddr = "";				//for debug
@@ -35,5 +39,7 @@ public class SendMail {
 		System.out.println("  MAIL Body: \n" + mailConf.body);
 		System.out.println("  MAIL Attach: " + mailConf.attach);
 		mailConf.sendRawMail();
+		
+		return 0;
 	}
 }

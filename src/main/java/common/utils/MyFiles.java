@@ -173,22 +173,12 @@ public class MyFiles {
 		return text;
 	}
 	
-	//List<String>を新規作成したTSVファイルに書き込む。
-    public static int WriteData2File(ArrayList<String> list, String writePath) throws IOException {
-		File file = new File(writePath);
-		FileWriter filewriter = new FileWriter(file);
-    	
-		String line;
-		//データ
-		for (int i=0; i<list.size(); i++) {
-			line = list.get(i);
-  			filewriter.write(line);
-		}
-		filewriter.close();
+	public static byte[] readAllBytes(String sqlPath) throws IOException {
+		Path path = Paths.get(sqlPath);
 		
-    	return 0;
-    }
-    
+		return Files.readAllBytes(path);
+	}
+	
 	//List<List<String>>を新規作成したTSVファイルに書き込む。
     public static int WriteList2File(ArrayList<ArrayList<String>> list, String writePath) throws IOException {
 		File file = new File(writePath);
@@ -204,6 +194,22 @@ public class MyFiles {
 				line = line + list.get(r).get(c) + "\t";
 			}
 			line = line + list.get(r).get(colLen-1) + "\r\n";
+  			filewriter.write(line);
+		}
+		filewriter.close();
+		
+    	return 0;
+    }
+    
+	//List<String>を新規作成したTSVファイルに書き込む。
+    public static int WriteData2File(ArrayList<String> list, String writePath) throws IOException {
+		File file = new File(writePath);
+		FileWriter filewriter = new FileWriter(file);
+    	
+		String line;
+		//データ
+		for (int i=0; i<list.size(); i++) {
+			line = list.get(i);
   			filewriter.write(line);
 		}
 		filewriter.close();

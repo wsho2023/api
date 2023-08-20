@@ -4,7 +4,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -40,6 +43,8 @@ public class MyExcel {
 	XSSFCellStyle suryoStyle;
 	XSSFCellStyle tankaStyle;
 	XSSFCellStyle kingakuStyle;
+	XSSFCellStyle dateStyle;
+	XSSFCellStyle dtimeStyle;
 	String[][] colFormat;
 	private static final short FONT_SIZE = 11;
 	
@@ -113,52 +118,47 @@ public class MyExcel {
         font.setFontHeightInPoints(FONT_SIZE);
         font.setFontName("Meiryo UI");
         //https://www.javadrive.jp/poi/style/index6.html
-        DataFormat format = book.createDataFormat();
-        textStyle = (XSSFCellStyle)book.createCellStyle();
-        textStyle.setDataFormat(format.getFormat("@"));
-        textStyle.setFont(font);
-		textStyle.setBorderLeft(BorderStyle.THIN);
-		textStyle.setBorderRight(BorderStyle.THIN);
-		textStyle.setBorderTop(BorderStyle.THIN); 
-		textStyle.setBorderBottom(BorderStyle.THIN); 
+		suryoStyle = makeDataCellStyle(font, "#,##0_ "); 
+		tankaStyle = makeDataCellStyle(font, "#,##0.00"); 
+		kingakuStyle = makeDataCellStyle(font, "#,##0"); 
+		dateStyle = makeDataCellStyle(font, "yyyy/mm/dd;@"); 
+		dtimeStyle = makeDataCellStyle(font, "yyyy/mm/dd hh:mm:ss"); 
+		textStyle = makeDataCellStyle(font, "@"); 
 		
-        suryoStyle = (XSSFCellStyle)book.createCellStyle();
-        suryoStyle.setDataFormat(format.getFormat("#,##0_ "));
-        suryoStyle.setFont(font);
-		suryoStyle.setBorderLeft(BorderStyle.THIN);
-		suryoStyle.setBorderRight(BorderStyle.THIN);
-		suryoStyle.setBorderTop(BorderStyle.THIN); 
-		suryoStyle.setBorderBottom(BorderStyle.THIN); 
-        
-        tankaStyle = (XSSFCellStyle)book.createCellStyle();
-        tankaStyle.setDataFormat(format.getFormat("#,##0.00"));
-        tankaStyle.setFont(font);
-		tankaStyle.setBorderLeft(BorderStyle.THIN);
-		tankaStyle.setBorderRight(BorderStyle.THIN);
-		tankaStyle.setBorderTop(BorderStyle.THIN); 
-		tankaStyle.setBorderBottom(BorderStyle.THIN); 
-        
-        kingakuStyle = (XSSFCellStyle)book.createCellStyle();
-        kingakuStyle.setDataFormat(format.getFormat("#,##0"));
-        kingakuStyle.setFont(font);
-		kingakuStyle.setBorderLeft(BorderStyle.THIN);
-		kingakuStyle.setBorderRight(BorderStyle.THIN);
-		kingakuStyle.setBorderTop(BorderStyle.THIN); 
-		kingakuStyle.setBorderBottom(BorderStyle.THIN); 
-        
         //ヘッダ用Cell Styleの作成（センタリング、文字色 白）
 		Font font2 = book.createFont();
         font2.setFontHeightInPoints(FONT_SIZE);
         font2.setFontName("Meiryo UI");
 		font2.setColor((short) 9);	//IndexedColors.WHITE(9)
-		headerStyle = (XSSFCellStyle)book.createCellStyle();
-		headerStyle.setAlignment(HorizontalAlignment.CENTER);		//水平
-		headerStyle.setVerticalAlignment(VerticalAlignment.CENTER);	//垂直
-		headerStyle.setFont(font2);
-		headerStyle.setBorderLeft(BorderStyle.THIN);
-		headerStyle.setBorderRight(BorderStyle.THIN);
-		headerStyle.setBorderTop(BorderStyle.THIN); 
-		headerStyle.setBorderBottom(BorderStyle.THIN); 
+		headerStyle = makeHeaderCellStyle(font2);
+	}
+	
+	//font と Dataformatを設定して、CellStyle を作成、罫線付き
+	XSSFCellStyle makeDataCellStyle(Font font, String format) {
+        DataFormat dformat = book.createDataFormat();
+        XSSFCellStyle cellStyle = (XSSFCellStyle)book.createCellStyle();
+        cellStyle.setDataFormat(dformat.getFormat(format));
+        cellStyle.setFont(font);
+        cellStyle.setBorderLeft(BorderStyle.THIN);
+        cellStyle.setBorderRight(BorderStyle.THIN);
+        cellStyle.setBorderTop(BorderStyle.THIN); 
+        cellStyle.setBorderBottom(BorderStyle.THIN); 
+		
+		return cellStyle;
+	}
+	
+	//font と Dataforma(中央揃え)を設定して、CellStyle を作成、罫線付き
+	XSSFCellStyle makeHeaderCellStyle(Font font) {
+        XSSFCellStyle cellStyle = (XSSFCellStyle)book.createCellStyle();
+        cellStyle.setAlignment(HorizontalAlignment.CENTER);			//水平
+        cellStyle.setVerticalAlignment(VerticalAlignment.CENTER);	//垂直
+        cellStyle.setFont(font);
+        cellStyle.setBorderLeft(BorderStyle.THIN);
+        cellStyle.setBorderRight(BorderStyle.THIN);
+        cellStyle.setBorderTop(BorderStyle.THIN); 
+        cellStyle.setBorderBottom(BorderStyle.THIN); 
+		
+		return cellStyle;
 	}
 
 	public void setSheet(String string) {
@@ -337,22 +337,26 @@ public class MyExcel {
 	
 	//listデータ（2次元）をExcelに書き出し(1行目はヘッダ行)
 	public int writeData(String sheetName, ArrayList<ArrayList<String>> list, boolean tableFlag) {
+        int maxRow = list.size();
+		if (maxRow < 2) {
+			System.err.println("書き込みデータ無し");
+			return -1;
+		}
         final var tableSheet = (XSSFSheet) book.getSheet(sheetName);
 		if (tableSheet == null) {
 			System.err.println("sheetName: " + sheetName + " error!");
 			return -1;
 		}
 		
-        int maxRow = list.size();
-		if (maxRow < 2) {
-			System.err.println("書き込みデータ無し");
-			return -1;
-		}
 		int maxCol = list.get(0).size();
 		String strValue;
 		int rowIdx = 0;
+	    //1行目の高さを取得する
+		//row = sheet.getRow(0);
+		//System.out.println("1行目の高さ：" + row.getHeight());
 		//ヘッダ行
 		row = tableSheet.createRow(rowIdx);			//行の生成
+		row.setHeight((short) 315);		//15.75pt
 		for (int colIdx=0; colIdx<maxCol; colIdx++) {
 			strValue = list.get(rowIdx).get(colIdx);
 			cell = row.createCell(colIdx);
@@ -362,7 +366,11 @@ public class MyExcel {
 		//データ行
 		boolean matchFlag = false;
 		for (rowIdx=1; rowIdx<maxRow; rowIdx++) {
-			row = tableSheet.createRow(rowIdx);		//行の生成
+		    //1行目の高さを取得する
+			//row = sheet.getRow(rowIdx);
+		    //System.out.println(rowIdx + "行目の高さ：" + row.getHeight());
+		    row = tableSheet.createRow(rowIdx);		//行の生成
+			row.setHeight((short) 315);		//15.75pt	//https://blog.java-reference.com/poi-width-height/
 			for (int colIdx=0; colIdx<maxCol; colIdx++) {
 				strValue = list.get(rowIdx).get(colIdx);
 				cell = row.createCell(colIdx);
@@ -403,6 +411,32 @@ public class MyExcel {
 									System.err.println("変換NG: " + strValue);
 									cell.setCellValue(strValue);
 								}
+								//System.out.println(calFmt[1] + ":" + strValue);
+								matchFlag = true;
+								break;
+							} else if (calFmt[1].equals("DATE")) {		//yyyy/mm/dd;@
+								try {
+									SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd");
+									Date tmpVal = sdf.parse(strValue);
+									cell.setCellStyle(dateStyle);
+									cell.setCellValue(tmpVal);
+								} catch (ParseException e) {
+									System.err.println("変換NG: " + strValue);
+									cell.setCellValue(strValue);
+								}								
+								//System.out.println(calFmt[1] + ":" + strValue);
+								matchFlag = true;
+								break;
+							} else if (calFmt[1].equals("DATETIME")) {	//yyyy/mm/dd hh:mm:ss
+								try {
+									SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+									Date tmpVal = sdf.parse(strValue);
+									cell.setCellStyle(dtimeStyle);
+									cell.setCellValue(tmpVal);
+								} catch (ParseException e) {
+									System.err.println("変換NG: " + strValue);
+									cell.setCellValue(strValue);
+								}								
 								//System.out.println(calFmt[1] + ":" + strValue);
 								matchFlag = true;
 								break;

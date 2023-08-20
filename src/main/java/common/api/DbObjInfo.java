@@ -20,6 +20,7 @@ public class DbObjInfo {
 	String templePath;
 	String outputPath;
     String saveXlsPath;
+    SendMail sendMail;
 	
 	public DbObjInfo(ApiConfig argConfig, String argSys, String argObj) {
 		config = argConfig;
@@ -29,6 +30,7 @@ public class DbObjInfo {
 		objName = null;
 		colFormat = null;
 		System.out.println("/" + sys + " obj: " + obj);
+		sendMail = new SendMail(config);
 	}
 	
 	public String makeObject() {
@@ -57,7 +59,7 @@ public class DbObjInfo {
 	}
 	
 	public String execute() {
-        String msg = getDataDB();	//データ取得
+        String msg = getDataDB(obj);//データ取得
 		if (msg != null) return msg;
 		
 		msg = makeExcel();			//Excelに書き出し
@@ -72,7 +74,7 @@ public class DbObjInfo {
 	//---------------------------------------
 	//データ取得
 	//---------------------------------------
-	public String getDataDB() {
+	public String getDataDB(String obj) {
 		//---------------------------------------
 		//SQL取得
 		//---------------------------------------
@@ -99,14 +101,14 @@ public class DbObjInfo {
 			String msg = "抽出データなし";
 			MyUtils.SystemErrPrint(msg);
 			return msg;
-		} else {
-			String saveTxtPath = config.getPathOutputPath() + obj + ".tsv";
-			try {
-				MyFiles.WriteList2File(list, saveTxtPath);
-			} catch (IOException e) {
-				e.printStackTrace();
-				return e.getMessage();
-			}
+		} 
+		
+		String saveTxtPath = config.getPathOutputPath() + obj + ".tsv";
+		try {
+			MyFiles.WriteList2File(list, saveTxtPath);
+		} catch (IOException e) {
+			e.printStackTrace();
+			return e.getMessage();
 		}
 		
 		//---------------------------------------
@@ -167,7 +169,7 @@ public class DbObjInfo {
 	public String sendMail() {
 		String mailBody = "";
 		String subject = "[" + sysName + "]連絡(" + objName + " " + MyUtils.getDate() + ")";
-		SendMail.execute(config, subject, mailBody, saveXlsPath);
+		sendMail.execute(subject, mailBody, saveXlsPath);
 		
 		return null;
 	}

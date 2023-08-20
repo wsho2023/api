@@ -27,6 +27,7 @@ public class ApiObjInfo {
 	String templePath;
 	String outputPath;
     String saveXlsPath;
+    SendMail sendMail;
 	String url;
 	int dlFlag;
 	
@@ -38,6 +39,7 @@ public class ApiObjInfo {
 		objName = null;
 		colFormat = null;
 		System.out.println("/" + sys + " obj: " + obj);
+		sendMail = new SendMail(config);
 	}
 	
 	public String makeObject() {
@@ -291,7 +293,7 @@ public class ApiObjInfo {
 		}
 
 		String subject = "[" + sysName + "]連絡(" + objName + " " + MyUtils.getDate() + ")";
-		SendMail.execute(config, subject, mailBody, saveXlsPath);
+		sendMail.execute(subject, mailBody, saveXlsPath);
 		
 		return null;
 	}

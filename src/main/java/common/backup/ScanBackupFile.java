@@ -27,7 +27,7 @@ public class ScanBackupFile {
 	public long totalSize;
 	public int totalMbSize;
 	public int deleteMbSize;
-	public String zipFilePath = "";
+	public String zipFilePath;
 	ArrayList<String> deleteList;
 	
 	public ScanBackupFile(String argTargetPath, String argBackupPath, int argDays) {
@@ -121,26 +121,25 @@ public class ScanBackupFile {
 	                    deleteSize = deleteSize + f.length();
 	                    deleteCount++;
                         if (deleteFlag == true) {
-                        	System.out.println("delete... " + update_time+"： " + filePath);
+                        	System.out.println("delete... " + update_time + "： " + filePath);
 	                        try {
 	                        	MyFiles.delete(filePath);
 	                        } catch (IOException e) {
 	                        	e.printStackTrace();
 	                        }
 	                    } else {
-	                        System.out.println("backup... " + update_time +"： " + filePath);
-                            Path p = Paths.get(filePath);	// 入力ファイル
-                            String fileName =  MyFiles.getFileName(filePath);
-                    		byte[] data;
+	                        System.out.println("backup... " + update_time + "： " + filePath);
 							try {
-								data = Files.readAllBytes(p);
+								Path p = Paths.get(filePath);	// 入力ファイルパス
+								String fileName =  MyFiles.getFileName(filePath);
+								byte[] fb = Files.readAllBytes(p);
 	                    		ZipEntry zip = new ZipEntry(fileName);
 	                    		zos.putNextEntry(zip);
-	                    		zos.write(data);
-	                    		deleteList.add(filePath);
+	                    		zos.write(fb);
 							} catch (IOException e) {
 								e.printStackTrace();
 							}
+							deleteList.add(filePath);
 	                    }
                     }
                 }
