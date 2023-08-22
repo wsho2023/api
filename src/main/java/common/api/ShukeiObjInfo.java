@@ -101,8 +101,13 @@ public class ShukeiObjInfo {
         		{"11", "KINGAKU"},
         		{"12", "DATE"},
 	        };
-			colFormat = new String[format.length][];
-			colFormat = format;
+			//colFormat = new String[format.length][];
+			//colFormat = format;
+			colFmtList = new ArrayList<String[][]>();
+			colFmtList.add(format);
+			colFmtList.add(format);
+			colFmtList.add(format);
+			colFmtList.add(format);
         } 
 		if (objName == null)
 			return "対象Object処理なし";
@@ -114,7 +119,7 @@ public class ShukeiObjInfo {
 		String msg;
     	listList = new ArrayList<ArrayList<ArrayList<String>>>();
 		for (String obj: objList) {
-			msg = getDataDB(obj);	//データ取得
+			msg = getData(obj);	//データ取得
 			if (msg != null) return msg;
 			listList.add(list);
 			list = null;
@@ -133,7 +138,7 @@ public class ShukeiObjInfo {
 		String msg;
     	listList = new ArrayList<ArrayList<ArrayList<String>>>();
 		for (String obj: objList) {
-			msg = getDataDB(obj);	//データ取得
+			msg = getData(obj);	//データ取得
 			if (msg != null) return msg;
 			listList.add(list);
 			list = null;
@@ -161,7 +166,7 @@ public class ShukeiObjInfo {
 	//---------------------------------------
 	//データ取得
 	//---------------------------------------
-	public String getDataDB(String obj) {
+	public String getData(String obj) {
 		//---------------------------------------
 		//SQL取得
 		//---------------------------------------
@@ -185,9 +190,7 @@ public class ShukeiObjInfo {
 			return e.toString();
 		}
 		if (list.size() < 2) {
-			String msg = "抽出データなし";
-			MyUtils.SystemErrPrint(msg);
-			return msg;
+			MyUtils.SystemErrPrint("抽出データなし");
 		}
 		
 		//---------------------------------------
@@ -203,9 +206,7 @@ public class ShukeiObjInfo {
         	return e.toString();
 		}
 		if (list == null) {
-			String msg = "抽出データなし";
-			MyUtils.SystemErrPrint(msg);
-			return msg;
+			MyUtils.SystemErrPrint("抽出データなし");
 		}*/
 		
 		return null;

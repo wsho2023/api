@@ -72,10 +72,15 @@ public class DataBaseDAO {
             
     		//データ格納
 			ArrayList<String> data = null;
+			String tmp;
     		while (rs.next()) {
     			data = new ArrayList<String>();
 				for (int d=0; d<colNum; d++) {
-					data.add(rs.getString(d+1));	//1始まり
+					tmp = rs.getString(d+1);	//1始まり
+					if (tmp == null)			//nullを表示しない
+						data.add("");
+					else
+						data.add(tmp);
 				}
     			list.add(data);
     		}

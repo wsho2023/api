@@ -36,10 +36,10 @@ public class DbObjInfo {
 	public String makeObject() {
         sysName = "システム";
         if (obj.equals("juchu") == true) {
-			//curl -X POST "http://localhost:8080/thspot?obj=juchu"
+			//curl -X POST "http://localhost:8080/db?obj=juchu"
         	objName = "juchu集計";
         } else if (obj.equals("update") == true) {
- 			//curl -X POST "http://localhost:8080/thspot?obj=update"
+ 			//curl -X POST "http://localhost:8080/db?obj=update"
         	//try {
 			//	DataBaseDAO.getInstance(config).update();
 			//} catch (SQLException e) {
@@ -49,9 +49,12 @@ public class DbObjInfo {
 			//}
         	//return "OK";
         } else if (obj.equals("uriage") == true) {
- 			//curl -X POST "http://localhost:8080/thspot?obj=uriage"
+ 			//curl -X POST "http://localhost:8080/db?obj=uriage"
         	objName = "uriage集計";
-        }
+	    } else if (obj.equals("faxlist") == true) {
+				//curl -X POST "http://localhost:8080/db?obj=faxlist"
+	    	objName = "FAXリスト";
+	    }
 		if (objName == null)
 			return "対象Object処理なし";
 		
@@ -59,7 +62,8 @@ public class DbObjInfo {
 	}
 	
 	public String execute() {
-        String msg = getDataDB(obj);//データ取得
+		String msg;
+        msg = getData(obj);//データ取得
 		if (msg != null) return msg;
 		
 		msg = makeExcel();			//Excelに書き出し
@@ -74,7 +78,7 @@ public class DbObjInfo {
 	//---------------------------------------
 	//データ取得
 	//---------------------------------------
-	public String getDataDB(String obj) {
+	public String getData(String obj) {
 		//---------------------------------------
 		//SQL取得
 		//---------------------------------------
@@ -98,11 +102,12 @@ public class DbObjInfo {
 			return e.toString();
 		}
 		if (list.size() < 2) {
-			String msg = "抽出データなし";
-			MyUtils.SystemErrPrint(msg);
-			return msg;
-		} 
+			MyUtils.SystemErrPrint("抽出データなし");
+		}
 		
+		//---------------------------------------
+		//TSVファイル書き出し
+		//---------------------------------------
 		String saveTxtPath = config.getPathOutputPath() + obj + ".tsv";
 		try {
 			MyFiles.WriteList2File(list, saveTxtPath);

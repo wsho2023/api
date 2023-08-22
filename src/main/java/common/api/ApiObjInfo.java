@@ -1,6 +1,7 @@
 package common.api;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ import common.utils.MyExcel;
 import common.utils.MyFiles;
 import common.utils.MyUtils;
 import common.utils.WebApi;
+import jakarta.servlet.http.HttpServletResponse;
 
 public class ApiObjInfo {
 	final String serv1 = "kkk";
@@ -84,11 +86,14 @@ public class ApiObjInfo {
 	        	//curl -X POST "http://localhost:8080/kkk?obj=daicho"
 	        	beseUrl = "http://localhost:8090/daicho";
 				objName = obj;
-		        String[][] format = {
-		        		{"9", "SURYO"},
-		        		{"10", "TANKA"},
-		        		{"11", "KINGAKU"},
-		        };
+				String[][] format = {
+					{"1", "DATETIME"},
+					{"5", "DATE"},
+					{"9", "SURYO"},
+					{"10", "TANKA"},
+					{"11", "KINGAKU"},
+					{"12", "DATE"},
+				};
 				colFormat = new String[format.length][];
 				colFormat = format;
 	        } else if (obj.equals("new") == true) {
@@ -115,13 +120,7 @@ public class ApiObjInfo {
 				filter = "today='" + today + "'";
 				sort = "";
 				objName = "kokunai";
-			} else if (obj.equals("2") == true) {
-				String today = MyUtils.getToday();
-				beseUrl = "http://localhost/api/2?";
-				filter = "today='" + today + "'";
-				sort = "";
-				objName = "kaigai";
-			}
+			} 
 		}
 		if (objName == null)
 			return "対象Object処理なし";
@@ -170,7 +169,8 @@ public class ApiObjInfo {
 	}
 	
 	public String execute() {
-		String msg = getDataApi();	//データ取得
+		String msg;
+		msg = getData(obj);	//データ取得
 		if (msg != null) return msg;
 		
 		msg = makeExcel();			//Excelに書き出し
@@ -182,10 +182,34 @@ public class ApiObjInfo {
 		return null;
 	}
 	
+	public String download(HttpServletResponse response) {
+		String msg;
+		msg = getData(obj);	//データ取得
+		if (msg != null) return msg;
+		
+		msg = makeExcel();			//Excelに書き出し
+		if (msg != null) return msg;
+		
+        try (OutputStream os = response.getOutputStream();) {
+        	String fileName = MyFiles.getFileName(saveXlsPath);
+            byte[] fb = MyFiles.readAllBytes(saveXlsPath);
+            
+            response.setContentType("application/octet-stream");
+            response.setHeader("Content-Disposition", "attachment; filename=" + fileName);
+            response.setContentLength(fb.length);
+            os.write(fb);
+            os.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+		
+		return null;
+	}
+	
 	//---------------------------------------
 	//データ取得
 	//---------------------------------------
-	public String getDataApi() {
+	public String getData(String obj) {
 		outputPath = config.getPathOutputPath();
 		String saveTxtPath = outputPath + obj + ".tsv";
 		//---------------------------------------
@@ -223,14 +247,12 @@ public class ApiObjInfo {
 			list = api.getListData();
         }
 		if (list.size() < 2) {
-			String msg = "抽出データなし";
-			MyUtils.SystemErrPrint(msg);
-			return msg;
+			MyUtils.SystemErrPrint("抽出データなし");
 		}
 		
 		return null;
 	}
-
+	
 	//---------------------------------------
 	//Excelに書き出し
 	//---------------------------------------
@@ -339,7 +361,7 @@ public class ApiObjInfo {
         	}
         } //rowIdx
     	for (ClassMstInfo cm : classMstList) {
-    		msg = "\n" + cm.name + "("+ cm.code + "): " + cm.cnt;
+    		msg = msg + "\n" + cm.name + "("+ cm.code + "): " + cm.cnt;
     	}
 		return msg;
     }
