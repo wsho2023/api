@@ -36,8 +36,8 @@ public class MyExcel {
 	public Workbook book;
 	//public Sheet sheet;
 	public XSSFSheet sheet;
-	Row row;
-	Cell cell;
+	public Row row;
+	public Cell cell;
 	XSSFCellStyle headerStyle;
 	XSSFCellStyle textStyle;
 	XSSFCellStyle suryoStyle;
