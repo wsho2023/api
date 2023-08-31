@@ -44,17 +44,12 @@ public class GaihiObjInfo {
 		
 		CONNECT_INFO = "scsales@sacles@orcl";
 		TABLE_NAME = "GAIHI_HASHIN_TRN";
-		TARGET_PATH = System.getProperty("user.dir") + System.getProperty("file.separator") + "output";; 
-		READ_FILE_PATH1 = TARGET_PATH + "complete.tsv";
-		READ_FILE_PATH2 = TARGET_PATH + "complete_makepdf.tsv";
-		WRITE_PATH = TARGET_PATH + "write_%s.tsv";
-		OUTPUT_PATH = TARGET_PATH + "Excel.xlsx";
-		FTP_BAT_PATH = TARGET_PATH + "gaihi_ftp.bat";  
-		
-		//カレントディレクトリ設定
-		//System.out.println("CurDir: " + System.getProperty("user.dir"));
-		System.setProperty("user.dir", TARGET_PATH);
-		System.out.println("CurDir: " + System.getProperty("user.dir"));
+		TARGET_PATH = System.getProperty("user.dir") + System.getProperty("file.separator"); 
+		READ_FILE_PATH1 = "complete.tsv";
+		READ_FILE_PATH2 = "complete_makepdf.tsv";
+		WRITE_PATH = "write_%s.tsv";
+		OUTPUT_PATH = "Excel.xlsx";
+		FTP_BAT_PATH = "gaihi_ftp.bat";  
 	}
 	
 	public String makeObject() {
@@ -96,8 +91,8 @@ public class GaihiObjInfo {
 		//---------------------------------------
 		//②complete.tsv(SJIS)から 前稼働日読込み
 		//---------------------------------------
-		if (MyFiles.exists(READ_FILE_PATH1) != false) {
-			return "ファイルなしエラー: " + FTP_BAT_PATH;
+		if (MyFiles.exists(READ_FILE_PATH1) != true) {
+			return "ファイルなしエラー: " + READ_FILE_PATH1;
 		}
 		ArrayList<ArrayList<String>> list1 = null;
 		ArrayList<ArrayList<String>> list2 = null;
@@ -115,7 +110,7 @@ public class GaihiObjInfo {
 		String procDate11;
 		list2 = new ArrayList<ArrayList<String>>();
 		for (ArrayList<String> line : list1) {
-			procDate11 = line.get(23);	//処理日時11
+			procDate11 = line.get(24);	//処理日時11
 			//if (procDate11.equals("") != true && procDate11.equals("処理日時11") != true) {
 				if (procDate11.equals(kinou) == true) {
 					list2.add(line);
@@ -127,7 +122,7 @@ public class GaihiObjInfo {
 		//③0だったら、もう一つのファイルから 前稼働日読込み（5のつく日）
 		//---------------------------------------
 		if (list2.size() == 0) {
-			if (MyFiles.exists(READ_FILE_PATH2) != false) {
+			if (MyFiles.exists(READ_FILE_PATH2) != true) {
 				return "ファイルなしエラー: " + FTP_BAT_PATH;
 			}
 			list2 = null;
@@ -142,7 +137,7 @@ public class GaihiObjInfo {
 			//String data;
 			list2 = new ArrayList<ArrayList<String>>();
 			for (ArrayList<String> line : list1) {
-				procDate11 = line.get(23);	//処理日時11
+				procDate11 = line.get(24);	//処理日時11
 				//if (procDate11.equals("") != true && procDate11.equals("処理日時11") != true) {
 					if (procDate11.equals(kinou) == true) {
 						list2.add(line);
@@ -161,7 +156,7 @@ public class GaihiObjInfo {
 		}
 		
 		//TSVファイル書き出し(UTF-8)
-		String yomitoriDay = kinou.replace("\\", "");	//YYYYMMDD
+		String yomitoriDay = kinou.replace("/", "");	//YYYYMMDD
 		String writePath = String.format(WRITE_PATH, yomitoriDay);
 		try {
 			MyFiles.WriteList2File(list2, writePath);
@@ -215,23 +210,26 @@ public class GaihiObjInfo {
 		try {
 			//Excelファイルオープン(xlsPath=nullなら、新規作成)
 			xlsx.open(xlsPath, sheetName);
-			int lastRow = xlsx.sheet.getLastRowNum() + 1;	//書き込み行＝末尾行＋１
-			int maxRow = lastRow + list2.size();
-			int maxCol = list2.get(0).size();
+			int lastRow = xlsx.sheet.getLastRowNum();
+			int maxRow = list2.size();
+			int maxCol;
 			String strValue;
-			int rowIdx;
-			for (rowIdx=lastRow; rowIdx<maxRow; rowIdx++) {
+			int rowIdx = lastRow + 1;	//書き込み行＝末尾行＋１
+			for (int Idx=0; Idx<maxRow; Idx++) {
 				xlsx.createRow(rowIdx);			//行の生成
+				maxCol = list1.get(Idx).size();
 				for (int colIdx=0; colIdx<maxCol; colIdx++) {
-					strValue = list2.get(rowIdx).get(colIdx);
+					strValue = list2.get(Idx).get(colIdx);
 					xlsx.cell = xlsx.row.createCell(colIdx);
 					xlsx.cell.setCellValue(strValue);
 				}
+				rowIdx++;
 			}
 			//末尾行をアクティブセルにする。
 			xlsx.getRow(rowIdx-1);	
 			xlsx.cell = xlsx.row.getCell(0);
 			xlsx.cell.setAsActiveCell();
+			xlsx.save(xlsPath);
 			xlsx.close();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -252,6 +250,8 @@ public class GaihiObjInfo {
 			return e.toString();
 		}
 		cmdList = null;
+		
+		System.out.println("完了");
 		
 		return null;
 	}
