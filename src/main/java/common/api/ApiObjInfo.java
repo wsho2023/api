@@ -32,6 +32,7 @@ public class ApiObjInfo {
     SendMail sendMail;
 	String url;
 	int dlFlag;
+	boolean attachFlag;
 	
 	public ApiObjInfo(ApiConfig argConfig, String argSys, String argObj) {
 		config = argConfig;
@@ -50,6 +51,7 @@ public class ApiObjInfo {
 		String filter = "";
 		String sort = "";
 		dlFlag = 0;	//ファイル出力
+		attachFlag = true; //メールにファイル添付
 		if (sysName.equals(serv1) == true) {
 			sysName = "kkk";
 			dlFlag = 0;	//ファイル出力
@@ -113,7 +115,7 @@ public class ApiObjInfo {
 			}
 		} else if (sysName.equals(serv3) == true) {
 			sysName = "kyaku";
-			dlFlag = 1;	//List読み込み
+			dlFlag = 0;	//TSVダウンロード
 	    	if (obj.equals("1") == true) {
 				String today = MyUtils.getToday();
 				beseUrl = "http://localhost/api/1?";
@@ -170,11 +172,14 @@ public class ApiObjInfo {
 	
 	public String execute() {
 		String msg;
-		msg = getData(obj);	//データ取得
+		msg = getData(obj);			//データ取得
 		if (msg != null) return msg;
 		
-		msg = makeExcel();			//Excelに書き出し
-		if (msg != null) return msg;
+		saveXlsPath = null;
+		if (attachFlag == true) {
+			msg = makeExcel();		//添付ファイル用Excelに書き出し
+			if (msg != null) return msg;
+		}
 		
 		msg = sendMail();			//メール添付送信
 		if (msg != null) return msg;
@@ -222,7 +227,7 @@ public class ApiObjInfo {
             //既存ファイルがあれば削除
 			MyFiles.existsDelete(saveTxtPath);
 			//データダウンロード
-			res = api.download(saveTxtPath, dlFlag);
+			res = api.download(saveTxtPath, dlFlag);	//dlFlag 0:ファイル出力 1:List読み込み
 		} catch (IOException e) {
 			e.printStackTrace();
         	return e.toString();
@@ -315,6 +320,8 @@ public class ApiObjInfo {
 		}
 
 		String subject = "[" + sysName + "]連絡(" + objName + " " + MyUtils.getDate() + ")";
+		if (attachFlag == false)
+			saveXlsPath = null;	//添付不要
 		sendMail.execute(subject, mailBody, saveXlsPath);
 		
 		return null;

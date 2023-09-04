@@ -89,7 +89,7 @@ public class GaihiObjInfo {
 		cmdList = null;
 		
 		//---------------------------------------
-		//②complete.tsv(SJIS)から 前稼働日読込み
+		//②complete.tsv(SJIS)から 前日分読込み
 		//---------------------------------------
 		if (MyFiles.exists(READ_FILE_PATH1) != true) {
 			return "ファイルなしエラー: " + READ_FILE_PATH1;
@@ -98,7 +98,8 @@ public class GaihiObjInfo {
 		ArrayList<ArrayList<String>> list2 = null;
 		list1 = new ArrayList<ArrayList<String>>();
 		try {
-			list1 = MyFiles.parseTSV(READ_FILE_PATH1, "SJIS");	//or "UTF-8"
+			//https://itsakura.com/it-shiftjis-ms932
+			list1 = MyFiles.parseTSV(READ_FILE_PATH1, "MS932");	//"SJIS" or "UTF-8"
 		} catch (IOException e) {
 			e.printStackTrace();
         	return e.toString();
@@ -111,6 +112,7 @@ public class GaihiObjInfo {
 		list2 = new ArrayList<ArrayList<String>>();
 		for (ArrayList<String> line : list1) {
 			procDate11 = line.get(24);	//処理日時11
+			procDate11 = procDate11.substring(0,9);	//YYYY/MM/DDの前方10桁を抽出
 			//if (procDate11.equals("") != true && procDate11.equals("処理日時11") != true) {
 				if (procDate11.equals(kinou) == true) {
 					list2.add(line);
@@ -119,7 +121,7 @@ public class GaihiObjInfo {
 		}
 		
 		//---------------------------------------
-		//③0だったら、もう一つのファイルから 前稼働日読込み（5のつく日）
+		//③0だったら、もう1つのファイルから 前日分読込み（5のつく日）
 		//---------------------------------------
 		if (list2.size() == 0) {
 			if (MyFiles.exists(READ_FILE_PATH2) != true) {
@@ -128,7 +130,7 @@ public class GaihiObjInfo {
 			list2 = null;
 			list1 = new ArrayList<ArrayList<String>>();
 			try {
-				list1 = MyFiles.parseTSV(READ_FILE_PATH2, "SJIS");	//or "UTF-8"
+				list1 = MyFiles.parseTSV(READ_FILE_PATH1, "MS932");	//"SJIS" or "UTF-8"
 			} catch (IOException e) {
 				e.printStackTrace();
 	        	return e.toString();
@@ -138,6 +140,7 @@ public class GaihiObjInfo {
 			list2 = new ArrayList<ArrayList<String>>();
 			for (ArrayList<String> line : list1) {
 				procDate11 = line.get(24);	//処理日時11
+				procDate11 = procDate11.substring(0,9);	//YYYY/MM/DDの前方10桁を抽出
 				//if (procDate11.equals("") != true && procDate11.equals("処理日時11") != true) {
 					if (procDate11.equals(kinou) == true) {
 						list2.add(line);
