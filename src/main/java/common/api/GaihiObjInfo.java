@@ -28,6 +28,7 @@ public class GaihiObjInfo {
 	String READ_FILE_PATH1;
 	String READ_FILE_PATH2;
 	String WRITE_PATH;
+	String BACKUP_PATH;
 	String OUTPUT_PATH;
 	String FTP_BAT_PATH;  
 	String COPY_BAT_PATH;  
@@ -47,7 +48,8 @@ public class GaihiObjInfo {
 		TARGET_PATH = System.getProperty("user.dir") + System.getProperty("file.separator"); 
 		READ_FILE_PATH1 = "complete.tsv";
 		READ_FILE_PATH2 = "complete_makepdf.tsv";
-		WRITE_PATH = "write_%s.tsv";
+		WRITE_PATH = "complete.txt";
+		BACKUP_PATH = "write_%s.tsv";
 		OUTPUT_PATH = "Excel.xlsx";
 		FTP_BAT_PATH = "gaihi_ftp.bat";  
 	}
@@ -76,10 +78,8 @@ public class GaihiObjInfo {
 		if (MyFiles.exists(FTP_BAT_PATH) != true) {
 			return "ファイルなしエラー: " + FTP_BAT_PATH;
 		}
-		cmdList = new String[3];
-		cmdList[0]	=	"cmd";
-		cmdList[1]	=	"/c";
-		cmdList[2]	=	FTP_BAT_PATH;
+		cmdList = new String[1];
+		cmdList[0]	=	FTP_BAT_PATH;;
 		try {
 		    MyUtils.exeCmd(cmdList);
 		} catch (Exception e) {
@@ -112,12 +112,12 @@ public class GaihiObjInfo {
 		list2 = new ArrayList<ArrayList<String>>();
 		for (ArrayList<String> line : list1) {
 			procDate11 = line.get(24);	//処理日時11
-			procDate11 = procDate11.substring(0,9);	//YYYY/MM/DDの前方10桁を抽出
-			//if (procDate11.equals("") != true && procDate11.equals("処理日時11") != true) {
+			if (procDate11.equals("") != true && procDate11.equals("処理日時11") != true) {
+				procDate11 = procDate11.substring(0,9);	//YYYY/MM/DDの前方10桁を抽出
 				if (procDate11.equals(kinou) == true) {
 					list2.add(line);
 				}
-			//}
+			}
 		}
 		
 		//---------------------------------------
@@ -130,7 +130,7 @@ public class GaihiObjInfo {
 			list2 = null;
 			list1 = new ArrayList<ArrayList<String>>();
 			try {
-				list1 = MyFiles.parseTSV(READ_FILE_PATH1, "MS932");	//"SJIS" or "UTF-8"
+				list1 = MyFiles.parseTSV(READ_FILE_PATH2, "MS932");	//"SJIS" or "UTF-8"
 			} catch (IOException e) {
 				e.printStackTrace();
 	        	return e.toString();
@@ -140,12 +140,12 @@ public class GaihiObjInfo {
 			list2 = new ArrayList<ArrayList<String>>();
 			for (ArrayList<String> line : list1) {
 				procDate11 = line.get(24);	//処理日時11
-				procDate11 = procDate11.substring(0,9);	//YYYY/MM/DDの前方10桁を抽出
-				//if (procDate11.equals("") != true && procDate11.equals("処理日時11") != true) {
+				if (procDate11.equals("") != true && procDate11.equals("処理日時11") != true) {
+					procDate11 = procDate11.substring(0,9);	//YYYY/MM/DDの前方10桁を抽出
 					if (procDate11.equals(kinou) == true) {
 						list2.add(line);
 					}
-				//}
+				}
 			}
 		}
 		
@@ -154,32 +154,36 @@ public class GaihiObjInfo {
 		//---------------------------------------
 		if (list2.size() == 0) {
 			String msg = "抽出データなし"; 
-			MyUtils.SystemErrPrint(msg);
 			return msg;
 		}
 		
 		//TSVファイル書き出し(UTF-8)
-		String yomitoriDay = kinou.replace("/", "");	//YYYYMMDD
-		String writePath = String.format(WRITE_PATH, yomitoriDay);
 		try {
-			MyFiles.WriteList2File(list2, writePath);
+			MyFiles.WriteList2File(list2, WRITE_PATH);
 		} catch (IOException e) {
 			e.printStackTrace();
 			return e.toString();
+		}
+		//Backup
+		String yomitoriDay = kinou.replace("/", "");	//YYYYMMDD
+		String backupPath = String.format(BACKUP_PATH, yomitoriDay);
+		try {
+			MyFiles.copyOW(WRITE_PATH, backupPath);
+		} catch (IOException e) {
+			e.printStackTrace();
+        	return e.toString();
 		}
 		
 		//---------------------------------------
 		//⑤sqrldrで、TMPテーブルへロード
 		//---------------------------------------
-		cmdList = new String[8];
-		cmdList[0]	=	"cmd";
-		cmdList[1]	=	"/c";
-		cmdList[2]	=	"sqlldr";
-		cmdList[3]	=	CONNECT_INFO;
-		cmdList[4]	=	"control=" + TABLE_NAME + ".ctl";
-		cmdList[5]	=	"log=" + TABLE_NAME + "_" + MyUtils.getDateStr() + ".log";;
-		cmdList[6]	=	"readsize=1000000";
-		cmdList[7]	=	"rows=128";
+		cmdList = new String[6];
+		cmdList[0]	=	"sqlldr";
+		cmdList[1]	=	CONNECT_INFO;
+		cmdList[2]	=	"control=" + TABLE_NAME + ".ctl";
+		cmdList[3]	=	"log=" + TABLE_NAME + "_" + MyUtils.getDateStr() + ".log";;
+		cmdList[4]	=	"readsize=1000000";
+		cmdList[5]	=	"rows=128";
 		try {
 		    MyUtils.exeCmd(cmdList);
 		} catch (Exception e) {
@@ -189,13 +193,11 @@ public class GaihiObjInfo {
 		cmdList = null;
 		
 		//⑥upload.sqlを実行（sqlplus）
-		cmdList = new String[6];
-		cmdList[0]	=	"cmd";
-		cmdList[1]	=	"/c";
-		cmdList[2]	=	"sqlplus";
-		cmdList[3]	=	"-S";
-		cmdList[4]	=	CONNECT_INFO;
-		cmdList[5]	=	"@updateGaihi.sql";
+		cmdList = new String[4];
+		cmdList[0]	=	"sqlplus";
+		cmdList[1]	=	"-S";
+		cmdList[2]	=	CONNECT_INFO;
+		cmdList[3]	=	"@updateGaihi.sql";
 		try {
 		    MyUtils.exeCmd(cmdList);
 		} catch (Exception e) {
@@ -254,7 +256,7 @@ public class GaihiObjInfo {
 		}
 		cmdList = null;
 		
-		System.out.println("完了");
+		MyUtils.SystemErrPrint("完了");
 		
 		return null;
 	}
