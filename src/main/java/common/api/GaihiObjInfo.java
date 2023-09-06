@@ -164,15 +164,6 @@ public class GaihiObjInfo {
 			e.printStackTrace();
 			return e.toString();
 		}
-		//Backup
-		String yomitoriDay = kinou.replace("/", "");	//YYYYMMDD
-		String backupPath = String.format(BACKUP_PATH, yomitoriDay);
-		try {
-			MyFiles.copyOW(WRITE_PATH, backupPath);
-		} catch (IOException e) {
-			e.printStackTrace();
-        	return e.toString();
-		}
 		
 		//---------------------------------------
 		//⑤sqrldrで、TMPテーブルへロード
@@ -192,6 +183,16 @@ public class GaihiObjInfo {
 		}
 		cmdList = null;
 		
+		//Backupの作成
+		String yomitoriDay = kinou.replace("/", "");	//YYYYMMDD
+		String backupPath = String.format(BACKUP_PATH, yomitoriDay);
+		try {
+			MyFiles.copyOW(WRITE_PATH, backupPath);
+		} catch (IOException e) {
+			e.printStackTrace();
+        	return e.toString();
+		}
+
 		//⑥upload.sqlを実行（sqlplus）
 		cmdList = new String[4];
 		cmdList[0]	=	"sqlplus";
@@ -244,10 +245,8 @@ public class GaihiObjInfo {
 		//---------------------------------------
 		//⑧そのExcelマスタをサーバーへコピー
 		//---------------------------------------
-		cmdList = new String[3];
-		cmdList[0]	=	"cmd";
-		cmdList[1]	=	"/c";
-		cmdList[2]	=	"gaihi_copy.bat";
+		cmdList = new String[1];
+		cmdList[0]	=	"gaihi_copy.bat";
 		try {
 		    MyUtils.exeCmd(cmdList);
 		} catch (Exception e) {
