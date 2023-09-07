@@ -41,7 +41,7 @@ public class ApiObjInfo {
 		obj = argObj;
 		objName = null;
 		colFormat = null;
-		System.out.println("/" + sys + " obj: " + obj);
+		System.out.println(sys + " obj: " + obj);
 		sendMail = new SendMail(config);
 	}
 	
@@ -51,7 +51,7 @@ public class ApiObjInfo {
 		String filter = "";
 		String sort = "";
 		dlFlag = 0;	//ファイル出力
-		attachFlag = true; //メールにファイル添付
+		attachFlag = true;	//メールにファイル添付
 		if (sysName.equals(serv1) == true) {
 			sysName = "kkk";
 			dlFlag = 0;	//ファイル出力
@@ -115,7 +115,7 @@ public class ApiObjInfo {
 			}
 		} else if (sysName.equals(serv3) == true) {
 			sysName = "kyaku";
-			dlFlag = 0;	//TSVダウンロード
+			dlFlag = 1;	//List読み込み
 	    	if (obj.equals("1") == true) {
 				String today = MyUtils.getToday();
 				beseUrl = "http://localhost/api/1?";
@@ -262,6 +262,11 @@ public class ApiObjInfo {
 	//Excelに書き出し
 	//---------------------------------------
 	public String makeExcel() {
+		if (list.size() < 2) {
+			String msg = "抽出データなし";
+			MyUtils.SystemErrPrint(obj);
+			return null;
+		}
 		templePath = config.getPathTempletePath();
 		outputPath = config.getPathOutputPath();
         String defXlsPath = templePath + objName + ".xlsx";
@@ -286,7 +291,7 @@ public class ApiObjInfo {
 			xlsx.open(tmpXlsPath, objName);
 			//データ転記、データ転記した範囲をテーブル化
 			xlsx.setColFormat(colFormat);
-			int err = xlsx.writeData(obj, list, true);
+			int err = xlsx.writeData(objName, list, true);
 			if (err == 0) {
 				//xlsx.refreshPivot("pivot");
 				//Excelファイル保存
@@ -318,8 +323,8 @@ public class ApiObjInfo {
 		} else {
 			mailBody = "件数: 0";
 		}
-
-		String subject = "[" + sysName + "]連絡(" + objName + " " + MyUtils.getDate() + ")";
+		
+		String subject = "[" + sysName + "]通知(" + objName + " " + MyUtils.getDate() + ")";
 		if (attachFlag == false)
 			saveXlsPath = null;	//添付不要
 		sendMail.execute(subject, mailBody, saveXlsPath);
@@ -333,6 +338,8 @@ public class ApiObjInfo {
 		if (sysName.equals(serv1) == true) {
 	        if (obj.equals("seisan") == true) {
 				colIdx = 28;
+			} if (obj.equals("uriage") == true) {
+				colIdx = 23;
 			}
 		}
 		if (colIdx == 0) {

@@ -79,7 +79,7 @@ public class GaihiObjInfo {
 			return "ファイルなしエラー: " + FTP_BAT_PATH;
 		}
 		cmdList = new String[1];
-		cmdList[0]	=	FTP_BAT_PATH;;
+		cmdList[0]	=	FTP_BAT_PATH;
 		try {
 		    MyUtils.exeCmd(cmdList);
 		} catch (Exception e) {
@@ -113,7 +113,7 @@ public class GaihiObjInfo {
 		for (ArrayList<String> line : list1) {
 			procDate11 = line.get(24);	//処理日時11
 			if (procDate11.equals("") != true && procDate11.equals("処理日時11") != true) {
-				procDate11 = procDate11.substring(0,9);	//YYYY/MM/DDの前方10桁を抽出
+				procDate11 = procDate11.substring(0,10);	//YYYY/MM/DDの前方10桁を抽出
 				if (procDate11.equals(kinou) == true) {
 					list2.add(line);
 				}
@@ -141,7 +141,7 @@ public class GaihiObjInfo {
 			for (ArrayList<String> line : list1) {
 				procDate11 = line.get(24);	//処理日時11
 				if (procDate11.equals("") != true && procDate11.equals("処理日時11") != true) {
-					procDate11 = procDate11.substring(0,9);	//YYYY/MM/DDの前方10桁を抽出
+					procDate11 = procDate11.substring(0,10);	//YYYY/MM/DDの前方10桁を抽出
 					if (procDate11.equals(kinou) == true) {
 						list2.add(line);
 					}

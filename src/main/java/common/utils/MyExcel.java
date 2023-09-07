@@ -385,7 +385,7 @@ public class MyExcel {
 									cell.setCellStyle(suryoStyle);
 									cell.setCellValue(tmpVal);
 								} catch(NumberFormatException e) {
-									System.err.println("SURYO変換NG: " + strValue);
+									System.err.println("colIdx + SURYO変換NG: " + strValue);
 									cell.setCellValue(strValue);
 								}
 								//System.out.println(calFmt[1] + ":" + strValue);
@@ -397,7 +397,7 @@ public class MyExcel {
 									cell.setCellStyle(tankaStyle);
 									cell.setCellValue(tmpVal);
 								} catch(NumberFormatException e) {
-									System.err.println("TANKA変換NG: " + strValue);
+									System.err.println("colIdx + TANKA変換NG: " + strValue);
 									cell.setCellValue(strValue);
 								}
 								//System.out.println(calFmt[1] + ":" + strValue);
@@ -409,7 +409,7 @@ public class MyExcel {
 									cell.setCellStyle(kingakuStyle);
 									cell.setCellValue(tmpVal);
 								} catch(NumberFormatException e) {
-									System.err.println("KINGAKU変換NG: " + strValue);
+									System.err.println("colIdx + KINGAKU変換NG: " + strValue);
 									cell.setCellValue(strValue);
 								}
 								//System.out.println(calFmt[1] + ":" + strValue);
