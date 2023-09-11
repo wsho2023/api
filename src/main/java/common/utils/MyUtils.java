@@ -3,7 +3,6 @@ package common.utils;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -65,7 +64,7 @@ public class MyUtils {
 		ProcessBuilder pb = new ProcessBuilder(cmdList);
 		Process process = pb.start();
 		System.out.println("  戻り値：" + process.waitFor());	//応答待ち
-		try (BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream(), Charset.defaultCharset()))) {
+		try (BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream(), "MS932"))) {	//Charset.defaultCharset()
             String line;
             while ((line = r.readLine()) != null) {
                 MyUtils.SystemLogPrint(line);

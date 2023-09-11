@@ -1,6 +1,7 @@
 package common.utils;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -10,6 +11,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ooxml.POIXMLException;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
@@ -34,6 +37,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 public class MyExcel {
 	
 	public Workbook book;
+    FileInputStream fi;
 	//public Sheet sheet;
 	public XSSFSheet sheet;
 	public Row row;
@@ -112,6 +116,31 @@ public class MyExcel {
 		setCellStyle();
 	}
 	
+	public void openOW(String xlsPath, String sheetName) throws IOException {
+	    try {
+	        fi = new FileInputStream(xlsPath);
+	        // Excel2003より新しいバージョンとしてファイルを開く
+	        book = new XSSFWorkbook(fi);
+	    } catch (POIXMLException e) {
+            fi.close();
+            fi = new FileInputStream(xlsPath);
+            // Excel2003以前のバージョンとしてファイルを開く
+            book = new HSSFWorkbook(fi);
+	    }
+        sheet = (XSSFSheet) book.getSheet(sheetName);
+	}
+	
+	public void saveOW(String xlsPath) throws IOException {
+		// 上書き保存
+		book.write(new FileOutputStream(xlsPath));
+        if (book != null) {
+        	book.close();
+        }
+        if (fi != null) {
+			fi.close();
+        }
+	}
+    
 	private void setCellStyle() {
 		//データ用Cell Styleの作成
 		Font font = book.createFont();
@@ -192,7 +221,7 @@ public class MyExcel {
 	public void createCell(int colIdx) {
 		cell = row.createCell(colIdx);
 	}
-
+	
 	public CellType getCellType(int colIdx) {
 		return cell.getCellType();
 	}
@@ -259,12 +288,17 @@ public class MyExcel {
 	public void setCellValue(int colIdx, String strValue) {
 		cell = row.createCell(colIdx);
 		cell.setCellValue(strValue);
-		cell.setCellStyle(textStyle);
+		//cell.setCellStyle(textStyle);
 	}
 
 	public void setCellValue(int colIdx, double dblValue) {
 		cell = row.createCell(colIdx);
 		cell.setCellValue(dblValue);
+	}
+	
+	public void setAsActiveCell(int colIdx) {
+		cell = row.getCell(colIdx);
+		cell.setAsActiveCell();
 	}
 
 	//ブックの別名保存
@@ -385,7 +419,7 @@ public class MyExcel {
 									cell.setCellStyle(suryoStyle);
 									cell.setCellValue(tmpVal);
 								} catch(NumberFormatException e) {
-									System.err.println("colIdx + SURYO変換NG: " + strValue);
+									System.err.println(rowIdx + "SURYO変換NG: " + strValue);
 									cell.setCellValue(strValue);
 								}
 								//System.out.println(calFmt[1] + ":" + strValue);
@@ -397,7 +431,7 @@ public class MyExcel {
 									cell.setCellStyle(tankaStyle);
 									cell.setCellValue(tmpVal);
 								} catch(NumberFormatException e) {
-									System.err.println("colIdx + TANKA変換NG: " + strValue);
+									System.err.println(rowIdx + "TANKA変換NG: " + strValue);
 									cell.setCellValue(strValue);
 								}
 								//System.out.println(calFmt[1] + ":" + strValue);
@@ -409,7 +443,7 @@ public class MyExcel {
 									cell.setCellStyle(kingakuStyle);
 									cell.setCellValue(tmpVal);
 								} catch(NumberFormatException e) {
-									System.err.println("colIdx + KINGAKU変換NG: " + strValue);
+									System.err.println(rowIdx + "KINGAKU変換NG: " + strValue);
 									cell.setCellValue(strValue);
 								}
 								//System.out.println(calFmt[1] + ":" + strValue);
@@ -422,7 +456,7 @@ public class MyExcel {
 									cell.setCellStyle(dateStyle);
 									cell.setCellValue(tmpVal);
 								} catch (ParseException e) {
-									System.err.println("DATE変換NG: " + strValue);
+									System.err.println(rowIdx + "DATE変換NG: " + strValue);
 									cell.setCellValue(strValue);
 								}								
 								//System.out.println(calFmt[1] + ":" + strValue);
@@ -435,7 +469,7 @@ public class MyExcel {
 									cell.setCellStyle(dtimeStyle);
 									cell.setCellValue(tmpVal);
 								} catch (ParseException e) {
-									System.err.println("DATETIME変換NG: " + strValue);
+									System.err.println(rowIdx + "DATETIME変換NG: " + strValue);
 									cell.setCellValue(strValue);
 								}								
 								//System.out.println(calFmt[1] + ":" + strValue);

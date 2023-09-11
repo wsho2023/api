@@ -214,29 +214,36 @@ public class GaihiObjInfo {
 		String sheetName = "sheet1";
 		MyExcel xlsx = new MyExcel();
 		try {
-			//Excelファイルオープン(xlsPath=nullなら、新規作成)
-			xlsx.open(xlsPath, sheetName);
-			int lastRow = xlsx.sheet.getLastRowNum();
-			int maxRow = list2.size();
-			int maxCol;
-			String strValue;
-			int rowIdx = lastRow + 1;	//書き込み行＝末尾行＋１
-			for (int Idx=0; Idx<maxRow; Idx++) {
-				xlsx.createRow(rowIdx);			//行の生成
-				maxCol = list1.get(Idx).size();
-				for (int colIdx=0; colIdx<maxCol; colIdx++) {
-					strValue = list2.get(Idx).get(colIdx);
-					xlsx.cell = xlsx.row.createCell(colIdx);
-					xlsx.cell.setCellValue(strValue);
-				}
-				rowIdx++;
+			xlsx.openOW(xlsPath, sheetName);
+		} catch (IOException e) {
+			e.printStackTrace();
+			return e.toString();
+		}
+		    
+		int maxRow = list2.size();
+		int maxCol;
+		String strValue;
+		int lastRow = xlsx.sheet.getLastRowNum();
+		int rowIdx = lastRow + 1;	//書き込み行＝末尾行＋１
+		System.out.println("書き込み開始位置: " + rowIdx);
+		for (int Idx=0; Idx<maxRow; Idx++) {
+			xlsx.createRow(rowIdx);			//行の生成
+			maxCol = list1.get(Idx).size();
+			for (int colIdx=0; colIdx<maxCol; colIdx++) {
+				strValue = list2.get(Idx).get(colIdx);
+				xlsx.setCellValue(colIdx, strValue);
 			}
-			//末尾行をアクティブセルにする。
-			xlsx.getRow(rowIdx-1);	
-			xlsx.cell = xlsx.row.getCell(0);
-			xlsx.cell.setAsActiveCell();
-			xlsx.save(xlsPath);
-			xlsx.close();
+			rowIdx++;
+		}
+		System.out.println("書き込み終了位置: " + (rowIdx-1));
+		//末尾行をアクティブセルにする。
+		if (xlsx.getRow(rowIdx-1)) {
+			xlsx.setAsActiveCell(0);
+		}
+		
+		// 上書き保存
+		try {
+			xlsx.saveOW(xlsPath);
 		} catch (IOException e) {
 			e.printStackTrace();
 			return e.toString();
@@ -255,7 +262,7 @@ public class GaihiObjInfo {
 		}
 		cmdList = null;
 		
-		MyUtils.SystemErrPrint("完了");
+		MyUtils.SystemLogPrint("完了");
 		
 		return null;
 	}
