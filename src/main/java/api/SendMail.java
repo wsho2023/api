@@ -1,14 +1,14 @@
-package common.api;
+package api;
 
-import com.example.demo.ApiConfig;
+import com.example.demo.SpringConfig;
 
-import common.utils.MyMail;
-import common.utils.MyUtils;
+import utils.MyMail;
+import utils.MyUtils;
 
 public class SendMail {
 	MyMail mailConf;
 	
-	public SendMail(ApiConfig config) {
+	public SendMail(SpringConfig config) {
 		mailConf = new MyMail();
 		mailConf.host = config.getMailHost();
 		mailConf.port = config.getMailPort();

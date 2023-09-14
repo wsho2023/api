@@ -1,14 +1,14 @@
-package common.api;
+package api;
 
 import java.util.ArrayList;
 
-import com.example.demo.ApiConfig;
+import com.example.demo.SpringConfig;
 
-import common.backup.ScanBackupFile;
-import common.utils.MyUtils;
+import backup.ScanBackupFile;
+import utils.MyUtils;
 
 public class BakObjInfo {
-	ApiConfig config;
+	SpringConfig config;
 	String sys;
 	String sysName;
 	String obj;
@@ -21,7 +21,7 @@ public class BakObjInfo {
     SendMail sendMail;
     ScanBackupFile backup;
 	
-	public BakObjInfo(ApiConfig argConfig, String argSys, String argObj) {
+	public BakObjInfo(SpringConfig argConfig, String argSys, String argObj) {
 		config = argConfig;
         sys = argSys;
         sysName = null;

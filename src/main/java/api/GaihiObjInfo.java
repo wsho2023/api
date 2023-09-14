@@ -1,16 +1,16 @@
-package common.api;
+package api;
 
 import java.io.IOException;
 import java.util.ArrayList;
 
-import com.example.demo.ApiConfig;
+import com.example.demo.SpringConfig;
 
-import common.utils.MyExcel;
-import common.utils.MyFiles;
-import common.utils.MyUtils;
+import utils.MyExcel;
+import utils.MyFiles;
+import utils.MyUtils;
 
 public class GaihiObjInfo {
-	ApiConfig config;
+	SpringConfig config;
 	String sys;
 	String sysName;
 	String obj;
@@ -33,7 +33,7 @@ public class GaihiObjInfo {
 	String FTP_BAT_PATH;  
 	String COPY_BAT_PATH;  
 	
-	public GaihiObjInfo(ApiConfig argConfig, String argSys, String argObj) {
+	public GaihiObjInfo(SpringConfig argConfig, String argSys, String argObj) {
 		config = argConfig;
         sys = argSys;
         sysName = null;

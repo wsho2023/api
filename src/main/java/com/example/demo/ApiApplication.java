@@ -6,11 +6,7 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 
 @SpringBootApplication
-//@RestController	//★これが絶対必要！
 public class ApiApplication extends SpringBootServletInitializer {
-
-    //@Autowired
-	//private ApiConfig config;
 
 	public static void main(String[] args) {
 		SpringApplication.run(ApiApplication.class, args);

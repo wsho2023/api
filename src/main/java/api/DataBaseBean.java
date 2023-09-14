@@ -1,4 +1,4 @@
-package common.api;
+package api;
 
 import java.util.ArrayList;
 

@@ -1,4 +1,4 @@
-package common.api;
+package api;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
@@ -9,7 +9,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
-import com.example.demo.ApiConfig;
+import com.example.demo.SpringConfig;
 
 public class DataBaseDAO {
 	String DB_URL;
@@ -19,7 +19,7 @@ public class DataBaseDAO {
 	
 	ArrayList<String> header;
 	
-	public DataBaseDAO(ApiConfig config) {
+	public DataBaseDAO(SpringConfig config) {
         //接続情報取得
 		DB_URL = config.getDBUrl();
 		DB_USER = config.getDBUsername();
@@ -28,7 +28,7 @@ public class DataBaseDAO {
 	}
 
 	// インスタンスオブジェクトの生成->返却（コードの簡略化）
-	public static DataBaseDAO getInstance(ApiConfig config) {
+	public static DataBaseDAO getInstance(SpringConfig config) {
 		return new DataBaseDAO(config);
 	}
 	

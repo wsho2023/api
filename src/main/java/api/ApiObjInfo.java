@@ -1,4 +1,4 @@
-package common.api;
+package api;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -6,20 +6,20 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 
-import com.example.demo.ApiConfig;
+import com.example.demo.SpringConfig;
 
-import common.utils.MyExcel;
-import common.utils.MyFiles;
-import common.utils.MyUtils;
-import common.utils.WebApi;
 import jakarta.servlet.http.HttpServletResponse;
+import utils.MyExcel;
+import utils.MyFiles;
+import utils.MyUtils;
+import utils.WebApi;
 
 public class ApiObjInfo {
-	final String serv1 = "kkk";
-	final String serv2 = "hantei";
-	final String serv3 = "kyaku";
+	final String serv1 = "/api/kkk";
+	final String serv2 = "/api/hantei";
+	final String serv3 = "/api/kyaku";
 	
-	ApiConfig config;
+	SpringConfig config;
 	String sys;
 	String sysName;
 	String obj;
@@ -34,7 +34,7 @@ public class ApiObjInfo {
 	int dlFlag;
 	boolean attachFlag;
 	
-	public ApiObjInfo(ApiConfig argConfig, String argSys, String argObj) {
+	public ApiObjInfo(SpringConfig argConfig, String argSys, String argObj) {
 		config = argConfig;
         sys = argSys;
         sysName = null;

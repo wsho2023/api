@@ -6,18 +6,18 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import common.api.ApiObjInfo;
-import common.api.BakObjInfo;
-import common.api.DbObjInfo;
-import common.api.GaihiObjInfo;
-import common.api.ShukeiObjInfo;
+import api.ApiObjInfo;
+import api.BakObjInfo;
+import api.DbObjInfo;
+import api.GaihiObjInfo;
+import api.ShukeiObjInfo;
 import jakarta.servlet.http.HttpServletResponse;
 
 @RestController
 public class ApiController {
 
     @Autowired
-    private ApiConfig config;
+    private SpringConfig config;
 
     //----------------------------------------------------------------------
 	final String serv1 = "/api/kkk";
