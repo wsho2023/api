@@ -6,8 +6,8 @@ import java.util.ArrayList;
 
 import com.example.demo.SpringConfig;
 
-import utils.MyFiles;
-import utils.MyUtils;
+import common.utils.MyFiles;
+import common.utils.MyUtils;
 
 public class DbObjInfo {
 	SpringConfig config;

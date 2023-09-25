@@ -8,11 +8,11 @@ import java.util.ArrayList;
 
 import com.example.demo.SpringConfig;
 
+import common.utils.MyExcel;
+import common.utils.MyFiles;
+import common.utils.MyUtils;
+import common.utils.WebApi;
 import jakarta.servlet.http.HttpServletResponse;
-import utils.MyExcel;
-import utils.MyFiles;
-import utils.MyUtils;
-import utils.WebApi;
 
 public class ApiObjInfo {
 	final String serv1 = "/api/kkk";

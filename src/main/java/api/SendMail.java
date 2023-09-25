@@ -2,8 +2,8 @@ package api;
 
 import com.example.demo.SpringConfig;
 
-import utils.MyMail;
-import utils.MyUtils;
+import common.utils.MyMail;
+import common.utils.MyUtils;
 
 public class SendMail {
 	MyMail mailConf;

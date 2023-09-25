@@ -1,6 +1,3 @@
-#server:
-#  port: 8090
-#
 spring:
   datasource:
     url: jdbc:oracle:thin:@localhost:1521:orcl
@@ -11,27 +8,53 @@ spring:
     multipart:
       max-file-size: 5MB
       max-request-size: 5MB
-
-api:
   mail:
     host: smtp.gmail.com
     port: 587
     username: username
     password: password
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
     smtp_auth: true
     smtp_starttls_enable: true
-  datasource:
-    url: jdbc:oracle:thin:@localhost:1521:orcl
-    username: username
-    password: password
-    driverClassName: oracle.jdbc.driver.OracleDriver
+    from: username
   proxy:
     host: host
     port: port
     username: username
     password: password
+  scan:
+    test_flag: false
+    def_tgt1: 1FAX
+    def_tgt2: 2FAX
+    def_url1: 1fax
+    def_url2: 2fax
+    path1: D:\pleiades\\fax\
+    path2: D:\pleiades\\fax\
+    form_type1: 1帳票
+    form_type2: 2帳票
+  ocr:
+    upload_path1: D:\pleiades\upload1\
+    upload_path2: D:\pleiades\upload2\
+    input_path: D:\pleiades\input\
+    output_path: D:\pleiades\output\
+    host_url: host_url
+    add_page: add_page
+    add_sort: add_sort
+    read_unit: read_unit
+    read_sort: read_sort
+    unit_export: unit_export
+    link_entry: link_entry
+    api_key: api_key
+    api_key_value: api_key_value
+    user_id: user_id
   path:
-    templete_path: .\templete\
+    #templete_path: .\templete\
+    templete_path: .\output\
     output_path: .\output\
 
 # SQLログ出力

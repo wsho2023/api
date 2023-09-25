@@ -5,9 +5,9 @@ import java.util.ArrayList;
 
 import com.example.demo.SpringConfig;
 
-import utils.MyExcel;
-import utils.MyFiles;
-import utils.MyUtils;
+import common.utils.MyExcel;
+import common.utils.MyFiles;
+import common.utils.MyUtils;
 
 public class GaihiObjInfo {
 	SpringConfig config;

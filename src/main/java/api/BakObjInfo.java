@@ -4,8 +4,8 @@ import java.util.ArrayList;
 
 import com.example.demo.SpringConfig;
 
-import backup.ScanBackupFile;
-import utils.MyUtils;
+import common.backup.ScanBackupFile;
+import common.utils.MyUtils;
 
 public class BakObjInfo {
 	SpringConfig config;
