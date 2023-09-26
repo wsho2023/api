@@ -2,7 +2,6 @@ package com.example.demo;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,20 +19,6 @@ public class ApiController {
     @Autowired
     private SpringConfig config;
 
-    //----------------------------------------------------------------------
-    @PostMapping("/api/{sys}")
-    public String apiPost(@PathVariable("sys") String sys, @RequestParam("obj") String obj) {
-    //----------------------------------------------------------------------
-    	ApiObjInfo objInfo = new ApiObjInfo(config, sys, obj);
-    	String msg = objInfo.makeObject();
-		if (msg != null) return msg;
-        
-        msg = objInfo.execute();
-		if (msg != null) return msg;
-		
-    	return "OK";
-    }
-    
     //----------------------------------------------------------------------
 	final String serv1 = "/api/kkk";
     @PostMapping(serv1)
@@ -153,7 +138,7 @@ public class ApiController {
 		
     	return "OK";
     }
-	    
+    
     //テストファイルダウンロード
     //curl -X GET "http://localhost:8080/daicho"
     /* @GetMapping("daicho")
