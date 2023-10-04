@@ -52,7 +52,7 @@ public class ApiObjInfo {
 		String sort = "";
 		dlFlag = 0;	//ファイル出力
 		attachFlag = true;	//メールにファイル添付
-		if (sysName.equals(serv1) == true) {
+		if (sys.equals(serv1) == true) {
 			sysName = "kkk";
 			dlFlag = 0;	//ファイル出力
 	        if (obj.equals("juchzn") == true) {
@@ -103,7 +103,7 @@ public class ApiObjInfo {
 	        	beseUrl = "http://localhost/api/new?";
 				objName = obj;
 	        }
-		} else if (sysName.equals(serv2) == true) {
+		} else if (sys.equals(serv2) == true) {
 			sysName = "hantei";
 			dlFlag = 1;	//List読み込み
 	    	if (obj.equals("2") == true) {
@@ -113,7 +113,7 @@ public class ApiObjInfo {
 				sort = "";
 				objName = "hantei";
 			}
-		} else if (sysName.equals(serv3) == true) {
+		} else if (sys.equals(serv3) == true) {
 			sysName = "kyaku";
 			dlFlag = 1;	//List読み込み
 	    	if (obj.equals("1") == true) {
@@ -168,6 +168,23 @@ public class ApiObjInfo {
 			url = url + "&sort=" + encoded;	//ソート(空白を含まないこと)
 		}
 		return null;
+	}
+	
+	//末尾Nカラムカット 
+	private ArrayList<ArrayList<String>> convAarryColumns(ArrayList<ArrayList<String>> list1) {
+		ArrayList<ArrayList<String>> list2 = new ArrayList<ArrayList<String>>();
+		ArrayList<String> data;
+		int rowLen = list1.size();
+		for (int r=0; r<rowLen; r++) {
+			int colLen = list1.get(r).size();
+			colLen = colLen - 10;	//末尾１０カラムカット 
+			data = new ArrayList<String>();
+			for (int c=0; c<colLen; c++) {
+				data.add(list1.get(r).get(c));
+			}
+			list2.add(data);
+		}
+		return list2;
 	}
 	
 	public String execute() {
