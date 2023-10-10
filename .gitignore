@@ -37,6 +37,11 @@ out/
 .vscode/
 src/main/resources/application.yml
 src/main/java/prop.properties
+src/main/resources/static/css/lib/*
+src/main/resources/static/js/lib/*
+data/*
+templete/*
+src/main/resources/application.yml
 gradle/wrapper/gradle-wrapper.jar
 gradle/wrapper/gradle-wrapper.properties
 gradlew

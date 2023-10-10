@@ -5,12 +5,13 @@ import java.io.OutputStream;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
+import javax.servlet.http.HttpServletResponse;
+
 import com.example.demo.SpringConfig;
 
 import common.utils.MyExcel;
 import common.utils.MyFiles;
 import common.utils.MyUtils;
-import jakarta.servlet.http.HttpServletResponse;
 
 public class ShukeiObjInfo {
 	SpringConfig config;

@@ -1,5 +1,7 @@
 package com.example.demo;
 
+import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -10,8 +12,8 @@ import api.ApiObjInfo;
 import api.BakObjInfo;
 import api.DbObjInfo;
 import api.GaihiObjInfo;
+import api.RemoteObjInfo;
 import api.ShukeiObjInfo;
-import jakarta.servlet.http.HttpServletResponse;
 
 @RestController
 public class ApiController {
@@ -130,6 +132,21 @@ public class ApiController {
     public String gaihiPost() {
     //----------------------------------------------------------------------
     	GaihiObjInfo objInfo = new GaihiObjInfo(config, gaihi, null);
+    	String msg = objInfo.makeObject();
+		if (msg != null) return msg;
+        
+        msg = objInfo.execute();
+		if (msg != null) return msg;
+		
+    	return "OK";
+    }
+    
+    //----------------------------------------------------------------------
+    final String remote = "/api/remote";
+    @PostMapping(remote)
+    public String remotePost(@RequestParam("obj") String obj) {
+    //----------------------------------------------------------------------
+    	RemoteObjInfo objInfo = new RemoteObjInfo(config, remote, obj);
     	String msg = objInfo.makeObject();
 		if (msg != null) return msg;
         

@@ -15,6 +15,7 @@ public class SpringConfig {
     private Map<String,String> scan;
     private Map<String,String> ocr;
     private Map<String,String> path;
+    private Map<String,String> menu;
     
     public Map<String, String> getDatasource() {	return datasource;	}
     public Map<String, String> getMail() {	return mail;	}
@@ -22,6 +23,7 @@ public class SpringConfig {
     public Map<String, String> getScan() {	return scan;	}
     public Map<String, String> getOcr() {	return ocr;	}
     public Map<String, String> getPath() {	return path;	}
+    public Map<String, String> getMenu() {	return menu;	}
 
     public void setDatasource(Map<String, String> datasource) {	this.datasource = datasource;	}
     public void setMail(Map<String, String> mail) {	this.mail = mail;	}
@@ -29,6 +31,7 @@ public class SpringConfig {
     public void setScan(Map<String, String> scan) {	this.scan = scan;	}
     public void setOcr(Map<String, String> ocr) {	this.ocr = ocr;	}
     public void setPath(Map<String, String> path) {	this.path = path;	}
+    public void setMenu(Map<String, String> menu) {	this.menu = menu;	}
     
     public String getDBUrl(){	return datasource.get("url");	}
     public String getDBUsername(){	return datasource.get("username");    }
@@ -39,8 +42,8 @@ public class SpringConfig {
     public String getMailPort(){	return mail.get("port");    }
     public String getMailUsername(){	return mail.get("username");    }
     public String getMailPassword(){	return mail.get("password");    }
-    public String getMailSmtpAuth(){	return mail.get("properties.mail.smtp.auth");    }
-    public String getMailSmtpStarttlsEnable(){	return mail.get("properties.mail.smtp.starttls.enable");	}
+    public String getMailSmtpAuth(){	return mail.get("smtp_auth");    }
+    public String getMailSmtpStarttlsEnable(){	return mail.get("smtp_starttls_enable");	}
     public String getMailFrom(){	return mail.get("from");	}
     
     public String getProxyHost(){	return proxy.get("host");	}
@@ -76,5 +79,9 @@ public class SpringConfig {
     public String getPathTempletePath(){	return path.get("templete_path");	}
 	public String getPathInputPath(){	return path.get("input_path");    }
 	public String getPathOutputPath(){	return path.get("output_path");    }
+	
+    public String getMenuProject(){	return menu.get("project");	}
+    //public Set<String> getMenuHref(){	return menu.get("href");	}
+    //public Set<String> getMenuName(){	return menu.get("name");	}
 	
 }

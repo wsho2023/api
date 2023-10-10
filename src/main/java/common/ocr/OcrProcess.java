@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -19,48 +20,51 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import common.fax.FaxDataDAO;
 import common.fax.FaxScanFile;
+import common.po.PoScanFile;
 import common.utils.MyExcel;
 import common.utils.MyFiles;
 import common.utils.MyUtils;
 import common.utils.WebApi;
 
 public class OcrProcess {
-	static SpringConfig config;
-	static FaxScanFile scan2;
-	static String PROXY_HOST;
-	static String PROXY_PORT;
-	static String PROXY_USER;
-	static String PROXY_PASSWORD;
-	static String OCR_HOST_URL;
-	static String OCR_API_KEY;
-	static String OCR_API_KEY_VALUE;
-	static String OCR_USER_ID;
-	static String OCR_OUTPUT_PATH;
-	static String OCR_UPLOAD_PATH1;
+	SpringConfig config;
+	FaxScanFile scan2;
+	PoScanFile poUpload;
+	String PROXY_HOST;
+	String PROXY_PORT;
+	String PROXY_USER;
+	String PROXY_PASSWORD;
+	String OCR_HOST_URL;
+	String OCR_API_KEY;
+	String OCR_API_KEY_VALUE;
+	String OCR_USER_ID;
+	String OCR_OUTPUT_PATH;
+	String OCR_UPLOAD_PATH1;
 	String OCR_UPLOAD_PATH2;
-	static String OCR_ADD_PAGE;
-	static String OCR_ADD_SORT;
-	static String OCR_READ_SORT;
-	static String OCR_READ_UNIT;
-	static String OCR_UNIT_EXPORT;
-	static String OCR_LINK_ENTRY;
-	static String MAIL_HOST;
-	static String MAIL_PORT;
-	static String MAIL_USERNAME;
-	static String MAIL_PASSWORD;
-	static String MAIL_SMTP_AUTH;
-	static String MAIL_SMTP_STARTTLS_ENABLE;
-	static String MAIL_FROM;
-	static String CURRENT_PATH;
-	static String SCAN_CLASS1;
-	static String SCAN_CLASS2;
-	static String SCAN_TARGET_PATH1;
-	static String SCAN_TARGET_PATH2;
+	String OCR_ADD_PAGE;
+	String OCR_ADD_SORT;
+	String OCR_READ_SORT;
+	String OCR_READ_UNIT;
+	String OCR_UNIT_EXPORT;
+	String OCR_LINK_ENTRY;
+	String MAIL_HOST;
+	String MAIL_PORT;
+	String MAIL_USERNAME;
+	String MAIL_PASSWORD;
+	String MAIL_SMTP_AUTH;
+	String MAIL_SMTP_STARTTLS_ENABLE;
+	String MAIL_FROM;
+	String CURRENT_PATH;
+	String SCAN_CLASS1;
+	String SCAN_CLASS2;
+	String SCAN_TARGET_PATH1;
+	String SCAN_TARGET_PATH2;
 
 	public OcrProcess(SpringConfig arg_config) {
     	MyUtils.SystemLogPrint("■OcrProcessコンストラクタ");
 		config = arg_config;
     	scan2 = new FaxScanFile(config, config.getScanDefTgt2()); 
+    	poUpload = new PoScanFile(config, config.getScanDefTgt2()); 
 		PROXY_HOST = config.getProxyHost();
 		PROXY_PORT = config.getProxyPort();
 		PROXY_USER = config.getProxyUsername();
@@ -100,9 +104,9 @@ public class OcrProcess {
 	//---------------------------------
 	public void pollingReadingUnit() {
 		//MyUtils.SystemLogPrint("■pollingReadingUnit: start");
-		String type1 = "0";
-		String type2 = "1";
-		String type3 = "%";	//2
+		String type1 = "0";	//0
+		String type2 = "%";	//1
+		String type3 = "2";	//2
 		String type4 = "%";	//3
 		ArrayList<OcrDataFormBean> list = OcrDataFormDAO.getInstance(config).queryNotComplete(type1,type2,type3,type4);
 		int count = list.size();
@@ -113,6 +117,12 @@ public class OcrProcess {
 		for (int o=0; o<count; o++) {
 			OcrDataFormBean ocrDataForm = (OcrDataFormBean)list.get(o);
 			setTargetPath(ocrDataForm);
+			/*try {
+				ocrDataForm.outFolderPath = getTgtFolderPath(ocrDataForm);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			convertCSV(ocrDataForm);	//DLしたCSV変換処理*/
 			if (ocrDataForm.status.equals("REGIST") == true) {
 				MyUtils.SystemLogPrint("  " + o + " addReadingPage");
 				addReadingPage(ocrDataForm);
@@ -151,7 +161,7 @@ public class OcrProcess {
 	//読取ページ追加（処理）
 	//---------------------------------------
 	private int addReadingPage(OcrDataFormBean ocrData) {
-		MyUtils.SystemLogPrint("■addReadingPage: start: " + ocrData.uploadFilePath);
+		MyUtils.SystemLogPrint("■addReadingPage: start... " + ocrData.uploadFilePath);
 		//---------------------------------------
 		//HTTP request parametes
 		//---------------------------------------
@@ -406,8 +416,8 @@ public class OcrProcess {
 				return -1;
 			} 
 			String unitId = api.getResponseJson().get("readingUnits").get(0).get("id").asText();
-			String unitName = api.getResponseJson().get("readingUnits").get(0).get("name").asText();
-			String unitStatus = api.getResponseJson().get("readingUnits").get(0).get("status").asText();
+			//String unitName = api.getResponseJson().get("readingUnits").get(0).get("name").asText();
+			//String unitStatus = api.getResponseJson().get("readingUnits").get(0).get("status").asText();
 			String docsetId = api.getResponseJson().get("readingUnits").get(0).get("docsetId").asText();
 			String csvFileName = api.getResponseJson().get("readingUnits").get(0).get("csvFileName").asText();
 			String documentId = api.getResponseJson().get("readingUnits").get(0).get("documentId").asText();
@@ -483,7 +493,7 @@ public class OcrProcess {
 			int errorCode = api.getResponseJson().get("errorCode").asInt();
 			String message = api.getResponseJson().get("message").asText();
 			String pageCountAll = api.getResponseJson().get("pageCountAll").asText();
-			MyUtils.SystemLogPrint("  status: " + status + "  " + message);
+			MyUtils.SystemLogPrint("  status: " + status + "  errorCode: " + errorCode + "  message: " + message + "  pageCountAll:" + pageCountAll);
 			
 			//unitId指定なので1件しかないはず
 			String readingUnitId = "0";
@@ -583,8 +593,8 @@ public class OcrProcess {
 				return -1;
 			}
 			//unitiId指定なので、1個しかないはず！
-			String unitId = api.getResponseJson().get("readingUnits").get(0).get("id").asText();
-			String unitName = api.getResponseJson().get("readingUnits").get(0).get("name").asText();
+			//String unitId = api.getResponseJson().get("readingUnits").get(0).get("id").asText();
+			//String unitName = api.getResponseJson().get("readingUnits").get(0).get("name").asText();
 			String unitStatus = api.getResponseJson().get("readingUnits").get(0).get("status").asText();
 			String docsetId = api.getResponseJson().get("readingUnits").get(0).get("docsetId").asText();
 			String csvFileName = api.getResponseJson().get("readingUnits").get(0).get("csvFileName").asText();
@@ -797,6 +807,10 @@ public class OcrProcess {
             	maxCol = list.get(r).size();	//行ごとに列数が異なる（現状、ヘッダを全カラム設定しないため）
         }
         int repeatNum = (maxCol-ocrData.headerNum)/ocrData.meisaiNum;
+        int jouyo = (maxCol-ocrData.headerNum) % ocrData.meisaiNum;
+        if (jouyo > 0) {
+        	repeatNum = repeatNum + 1;	//
+        }
         int cnvRowWidth = repeatNum * (maxRow-1) + 1;
         int cnvColWidth = ocrData.headerNum + ocrData.meisaiNum;
         ArrayList<ArrayList<String>> cnvList = new ArrayList<ArrayList<String>>();
@@ -824,7 +838,7 @@ public class OcrProcess {
         			list.get(r).set((headerNum-1), po.toUpperCase());
         		}
         		int r2;
-				int c2;
+        		int c2;
 				boolean addOkFlag = false;
         		for (int p=0; p<repeatNum; p++) {
         			r2 = (r-1)*repeatNum + 1 + p - r2offset;
@@ -888,18 +902,20 @@ public class OcrProcess {
 						if (xlsx.getRow(rowIdx) == false)
 							continue;
 						for (int colIdx=0; colIdx<repColWidth; colIdx++) {
-							//読み込みCellがあるかCheck
-							if (xlsx.getCell(colIdx) == false)
-								continue;
-							ctype = xlsx.getCellType(colIdx);
-							str = "";
-							if (ctype == CellType.STRING) {
-								str = xlsx.getStringCellValue();
-								if (str.equals("") == true) 
-									break;	//カラムは、ブランクで終了
-							} else if (ctype == CellType.NUMERIC) {
-								int val = (int)xlsx.getNumericCellValue();
-								str = Integer.valueOf(val).toString();
+							//読み込みCellがあるかCheck(空白の場合、falseを返す。罫線があればブランクで認識する)
+							if (xlsx.getCell(colIdx) == true) {
+								ctype = xlsx.getCellType(colIdx);
+								str = "";
+								if (ctype == CellType.STRING) {
+									str = xlsx.getStringCellValue();
+									if (str.equals("") == true) 
+										break;	//カラムは、ブランクで終了
+								} else if (ctype == CellType.NUMERIC) {
+									int val = (int)xlsx.getNumericCellValue();
+									str = Integer.valueOf(val).toString();
+								}
+							} else {
+								str = "";
 							}
 							arrList.add(str);	//col追加
 						}
@@ -908,17 +924,17 @@ public class OcrProcess {
 						res = 0;	//置換情報の読込完了
 					}
 				} else {
-					MyUtils.SystemErrPrint("  置換マスタに定義が存在しませんでした");
+					MyUtils.SystemErrPrint("  置換マスタ：定義が存在しませんでした");
 				}
-				xlsx.close();
+				//xlsx.close();	更新されるので外す
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
     	} else {
-    		MyUtils.SystemErrPrint("  置換マスタファイルが見つかりませんでした");
+    		MyUtils.SystemErrPrint("  置換マスタ：ファイルが見つかりませんでした");
     	}
 		if (res == 0) {
-			MyUtils.SystemLogPrint("検出行: " + repList.size());
+			MyUtils.SystemLogPrint("置換マスタ 検出行: " + repList.size());
 			//置換処理
 			int col2;
 			String before = "";
@@ -932,19 +948,20 @@ public class OcrProcess {
 						before = repList.get(row2).get(col2);
 						after = repList.get(row2).get(col2+1);
 						int colIdx;
-						for (int rowIdx=2; rowIdx < cnvRowWidth; rowIdx++) {	//2行目から開始
+						for (int rowIdx=1; rowIdx < cnvRowWidth; rowIdx++) {	//cnvListは、ヘッダ除く1始まり
 							colIdx = col2/2;
 							org = cnvList.get(rowIdx).get(colIdx);
 							if (org.equals("") != true) {
 								str = org.replace(before, after);
 								if (org.equals(str) != true)
-									MyUtils.SystemLogPrint("  replace: " + org + "→" + str);
+									MyUtils.SystemLogPrint("  " + repList.get(0).get(col2) + "replace: " + org + "→" + str);
 								cnvList.get(rowIdx).set(colIdx, str);
 							}
 						}
 					}
 				}
 			}
+			MyUtils.SystemLogPrint("  置換処理完了");
 		}
 		//---------------------------------------
 		//数値系の固定のデータ加工設定
@@ -972,17 +989,17 @@ public class OcrProcess {
         String defXlsPath = CURRENT_PATH + "\\templete\\" + documentName + ".xlsx";	//カレントフォルダ
 		if (MyFiles.exists(defXlsPath)) {
 			//テンプレートから出力ファイル生成
-			String tmpXlsPath = CURRENT_PATH + "\\templete\\" + documentName + "_tmp.xlsx";
-			try {
-				MyFiles.copyOW(defXlsPath, tmpXlsPath);	//上書きコピー
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			//String tmpXlsPath = CURRENT_PATH + "\\templete\\" + documentName + "_tmp.xlsx";
+			//try {
+			//	MyFiles.copyOW(defXlsPath, tmpXlsPath);	//上書きコピー
+			//} catch (IOException e) {
+			//	e.printStackTrace();
+			//}
 			//Excelオープン
-			MyUtils.SystemLogPrint("  Excelオープン...: " + tmpXlsPath + " 定義名: " + documentName);
+			MyUtils.SystemLogPrint("  Excelオープン...: " + defXlsPath + " 定義名: " + documentName);
 			try {
 				MyExcel xlsx = new MyExcel();
-				xlsx.open(tmpXlsPath, null, false);	//1シート目
+				xlsx.open(defXlsPath, null, false);	//1シート目
 		        boolean resultFlag;
 		        String resultMsg = "";
 				String renkeiMsg = "";
@@ -1006,11 +1023,14 @@ public class OcrProcess {
 		        		numFlag = false;
 		        		strValue = "";
 		        		if (colSuryo != 0 && colTanka != 0 && colKingaku != 0) {
+		        			strValue = cnvList.get(rowIdx).get(colIdx);
 		        			if (colIdx==colSuryo) {
 								try {
 									suryo = Double.parseDouble(cnvList.get(rowIdx).get(colIdx));
-									strValue = String.valueOf(suryo);
-									xlsx.setCellValue(colIdx, strValue);
+									xlsx.setCellValue(colIdx, suryo);
+									strValue = BigDecimal.valueOf(suryo).toPlainString();
+									//strValue = String.valueOf(suryo);
+									//xlsx.setCellValue(colIdx, strValue);
 									numFlag = true;
 								} catch(NumberFormatException e) {
 								}	
@@ -1018,8 +1038,10 @@ public class OcrProcess {
 		        			if (colIdx==colTanka) {
 								try {
 									tanka = Double.parseDouble(cnvList.get(rowIdx).get(colIdx));
-									strValue = String.valueOf(tanka);
-									xlsx.setCellValue(colIdx, strValue);
+									xlsx.setCellValue(colIdx, tanka);
+									strValue = BigDecimal.valueOf(tanka).toPlainString();
+									//strValue = String.valueOf(tanka);
+									//xlsx.setCellValue(colIdx, strValue);
 									numFlag = true;
 								} catch(NumberFormatException e) {
 								}	
@@ -1027,8 +1049,10 @@ public class OcrProcess {
 		        			if (colIdx==colKingaku) {
 								try {
 									kingaku = Double.parseDouble(cnvList.get(rowIdx).get(colIdx));	//金額も.00のケースあり
-									strValue = String.valueOf(kingaku);
-									xlsx.setCellValue(colIdx, strValue);
+									xlsx.setCellValue(colIdx, kingaku);
+									strValue = BigDecimal.valueOf(kingaku).toPlainString();
+									//strValue = String.valueOf(kingaku);
+									//xlsx.setCellValue(colIdx, strValue);
 									numFlag = true;
 								} catch(NumberFormatException e) {
 								}
@@ -1047,7 +1071,7 @@ public class OcrProcess {
 		        	//数値x単価=金額チェック
 					//---------------------------------------
 		        	if ((rowIdx != 0) && (cnvList.get(rowIdx).get(0).equals("") != true) && (colSuryo != 0 && colTanka != 0 && colKingaku != 0)) {
-		        		int calc = (int) (suryo*tanka);
+		        		double calc = Math.floor(suryo*tanka);
 		        		if (calc != kingaku) {
 		        			if (resultFlag != true) {
 		        				resultFlag = true;
@@ -1204,7 +1228,7 @@ public class OcrProcess {
 				String outFilePath = outputcsvPath.replace(".csv",".xlsx");
 		        MyUtils.SystemLogPrint("  XLSXファイル保存: " + outFilePath);
 				xlsx.save(outFilePath);
-				xlsx.close();
+				//xlsx.close();	更新されるので外す
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -1387,13 +1411,13 @@ public class OcrProcess {
         String copyToFile = outputFolderPath + "\\" + fileName;
         //pdf回転変換
 		String[] copyCmd = new String[6];
-		copyCmd[0] = "pdftk";	//"C:\\Program Files (x86)\\PDFtk Server\\bin\\pdftk";
+		copyCmd[0] = "pdftk";			//"C:\\Program Files (x86)\\PDFtk Server\\bin\\pdftk";
 		copyCmd[1] = uploadFilePath;	//uploadFilePath.replace("\\", "\\\\");
 		copyCmd[2] = "cat";
-		copyCmd[3] = ocrData.rotateInfo;	//回転あり
+		copyCmd[3] = ocrData.rotateInfo;//回転あり
 		copyCmd[4] = "output";
 		copyCmd[5] = copyToFile;		//copyToFile.replace("\\\\", "\\");	//この変換の必要性については要確認！
-		System.out.print("  ");
+		System.out.print(" CMD :");
 		for (String cmd : copyCmd)
 			System.out.print(cmd + " ");
 		System.out.print("\n");
@@ -1429,17 +1453,8 @@ public class OcrProcess {
 			} catch (Throwable e) {
 				e.printStackTrace();
 			}
-		} else if (ocrData.type == 1) {
-			String chumonSrc = outputFolderPath + "\\" + ocrData.csvFileName.replace("csv", ".xlsx");
-			String chumonDst = OCR_UPLOAD_PATH2 + ocrData.csvFileName.replace("csv", ".xlsx");
-			try {
-				MyFiles.copyOW(chumonSrc, chumonDst);	//上書きコピー
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			MyUtils.SystemLogPrint("  OCR変換結果を注文書取込へ連携2");
 		//zip圧縮前のExcelファイルを **** フォルダへコピー ⇒ ただ、この時点で、マクロ実行すればよい
-		} else if (ocrData.type == 2 || (ocrData.type == 0 && ocrData.docsetName.equals(SCAN_CLASS1) == true)) {
+		} else if (ocrData.type == 2) {
 			String chumonSrc = outputFolderPath + "\\" + ocrData.csvFileName.replace("csv", ".xlsx");
 			String chumonDst = OCR_UPLOAD_PATH1 + ocrData.csvFileName.replace("csv", ".xlsx");
 			try {
@@ -1448,6 +1463,14 @@ public class OcrProcess {
 				e.printStackTrace();
 			}
 			MyUtils.SystemLogPrint("  OCR変換結果を注文書取込へ連携");
+		} else if (ocrData.type == 3) {
+			String fileName2 = MyFiles.getFileName(uploadFilePath);	//フルパスからファイル名取得
+			String pdfPath = outputFolderPath + "\\" + fileName2;
+			try {
+				poUpload.sendMailProcess(ocrData, pdfPath);
+			} catch (Throwable e) {
+				e.printStackTrace();
+			}
 		}
 
 		//完了ステータス更新
