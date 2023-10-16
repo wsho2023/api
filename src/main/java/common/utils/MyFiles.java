@@ -3,9 +3,12 @@ package common.utils;
 import static java.nio.file.StandardCopyOption.*;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -220,6 +223,33 @@ public class MyFiles {
     }
     
 	//List<String>を新規作成したTSVファイルに書き込む。
+    public static int WriteList2File(ArrayList<ArrayList<String>> list, String writePath, String charSet) throws IOException {
+    	if (charSet.equals("UTF-8") == true) {
+    		return WriteList2File(list, writePath);
+    	} else {
+    		//文字コードを指定して書き込む
+			File file = new File(writePath);
+	        OutputStreamWriter osw  = new OutputStreamWriter(new FileOutputStream(file), charSet);
+	        BufferedWriter bw = new BufferedWriter(osw);
+	        
+			String line;
+			int rowLen = list.size();
+			for (int r=0; r<rowLen; r++) {
+				int colLen = list.get(r).size();
+				//タブ区切り1行文字列(+改行)を作成
+				line = "";
+				for (int c=0; c<colLen-1; c++) {
+					line = line + list.get(r).get(c) + "\t";
+				}
+				line = line + list.get(r).get(colLen-1) + "\r\n";
+		        bw.write(line);
+		        bw.newLine();
+			}
+	        bw.close();
+    	}
+    	return 0;
+    }
+    
     public static int WriteData2File(ArrayList<String> list, String writePath) throws IOException {
 		File file = new File(writePath);
 		FileWriter filewriter = new FileWriter(file);

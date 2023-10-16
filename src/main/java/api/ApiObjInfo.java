@@ -19,6 +19,7 @@ public class ApiObjInfo {
 	final String serv1 = "/api/kkk";
 	final String serv2 = "/api/hantei";
 	final String serv3 = "/api/kyaku";
+	final String serv4 = "/api/jisskei";
 	
 	SpringConfig config;
 	String sys;
@@ -30,6 +31,7 @@ public class ApiObjInfo {
 	String templePath;
 	String outputPath;
     String saveXlsPath;
+    String saveCharSet;
     SendMail sendMail;
 	String url;
 	int dlFlag;
@@ -51,34 +53,35 @@ public class ApiObjInfo {
 		String fields = "";
 		String filter = "";
 		String sort = "";
-		dlFlag = 0;	//ファイル出力
+		dlFlag = 0;			//ファイル出力
 		attachFlag = true;	//メールにファイル添付
+		saveCharSet = "UTF-8";
 		if (sys.equals(serv1) == true) {
 			sysName = "kkk";
 			dlFlag = 0;	//ファイル出力
 	        if (obj.equals("juchzn") == true) {
-				//curl -X POST "http://localhost:8080/kkk?obj=juchzn"
+				//curl -X POST "http://localhost:8080/api/kkk?obj=juchzn"
 				String today = MyUtils.getToday();
 				beseUrl = "http://localhost/api/juchzn?";
 				filter = "date='" + today + "'";
 				sort = "";
 				objName = "juchzn";
 	        } else if (obj.equals("seisan") == true) {
-				//curl -X POST "http://localhost:8080/kkk?obj=seisan"
+				//curl -X POST "http://localhost:8080/api/kkk?obj=seisan"
 				String today = MyUtils.getToday();
 				beseUrl = "http://localhost/api/seisan?";
 				filter = "date='" + today + "'";
 				sort = "";
 				objName = "seisan";
 	        } else if (obj.equals("uriage") == true) {
-				//curl -X POST "http://localhost:8080/kkk?obj=uriage"
+				//curl -X POST "http://localhost:8080/api/kkk?obj=uriage"
 				String kinou = MyUtils.getToday(-1);	//前日
 				beseUrl = "http://localhost/api/uriage?";
 				filter = "date='" + kinou + "'";
 				sort = "";
 				objName = "uriage";
 	        } else if (obj.equals("kaigai") == true) {
-				//curl -X POST "http://localhost:8080/kkk?obj=kaigai"
+				//curl -X POST "http://localhost:8080/api/kkk?obj=kaigai"
 				String today = MyUtils.getToday();
 				today = today.replace("/", "");	//YYYYMMDDへ変換
 				beseUrl = "http://localhost/api/kaigai?";
@@ -86,7 +89,7 @@ public class ApiObjInfo {
 				sort = "";
 				objName = "kaigai";
 	        } else if (obj.equals("daicho") == true) {
-	        	//curl -X POST "http://localhost:8080/kkk?obj=daicho"
+	        	//curl -X POST "http://localhost:8080/api/kkk?obj=daicho"
 	        	beseUrl = "http://localhost:8090/daicho";
 				objName = obj;
 				String[][] format = {
@@ -100,7 +103,7 @@ public class ApiObjInfo {
 				colFormat = new String[format.length][];
 				colFormat = format;
 	        } else if (obj.equals("new") == true) {
-	        	//curl -X POST "http://localhost:8080/kkk?obj=new"
+	        	//curl -X POST "http://localhost:8080/api/kkk?obj=new"
 	        	beseUrl = "http://localhost/api/new?";
 				objName = obj;
 	        }
@@ -119,7 +122,18 @@ public class ApiObjInfo {
 			dlFlag = 1;	//List読み込み
 	    	if (obj.equals("1") == true) {
 				String today = MyUtils.getToday();
-				beseUrl = "http://localhost/api/1?";
+				beseUrl = "http://localhost/api/kyaku?";
+				filter = "today='" + today + "'";
+				sort = "";
+				objName = "kokunai";
+			} 
+		} else if (sys.equals(serv4) == true) {
+			sysName = "jisseki";
+			dlFlag = 1;	//List読み込み		
+			saveCharSet = "SJIS";
+	    	if (obj.equals("1") == true) {
+				String today = MyUtils.getToday();
+				beseUrl = "http://localhost/api/jisseki?";
 				filter = "today='" + today + "'";
 				sort = "";
 				objName = "kokunai";
@@ -255,6 +269,7 @@ public class ApiObjInfo {
 	        MyUtils.SystemErrPrint(msg);
         	return msg;
 		}
+        //★dlFlag=1のみに変更予定
         if (dlFlag == 0) {
     		//---------------------------------------
     		//TSVファイル読み込み
@@ -268,6 +283,14 @@ public class ApiObjInfo {
     		}
         } else {
 			list = api.getListData();
+			if (saveCharSet.equals("SJIS") == true) {
+				//listから読み込んで、文字コード指定してファイル出力
+				try {
+					MyFiles.WriteList2File(list, saveTxtPath, saveCharSet);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
         }
 		if (list.size() < 2) {
 			MyUtils.SystemErrPrint("抽出データなし");
@@ -333,6 +356,8 @@ public class ApiObjInfo {
 	//メール添付送信        
 	//---------------------------------------
 	public String sendMail() {
+		if (attachFlag == false)
+			saveXlsPath = null;	//添付不要
 		String mailBody = "";
         int maxRow = list.size();
 		if (maxRow > 1) {
@@ -340,11 +365,10 @@ public class ApiObjInfo {
 			mailBody = mailBody + getGroupShukei(list);
 		} else {
 			mailBody = "件数: 0";
+			saveXlsPath = null;	//添付不要(からファイル)
 		}
 		
 		String subject = "[" + sysName + "]通知(" + objName + " " + MyUtils.getDate() + ")";
-		if (attachFlag == false)
-			saveXlsPath = null;	//添付不要
 		sendMail.execute(subject, mailBody, saveXlsPath);
 		
 		return null;

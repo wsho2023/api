@@ -67,6 +67,21 @@ public class ApiController {
     }
     
     //----------------------------------------------------------------------
+	final String serv4 = "/api/jisseki";
+    @PostMapping(serv4)
+    public String serv4Post(@RequestParam("obj") String obj) {
+    //----------------------------------------------------------------------
+    	ApiObjInfo objInfo = new ApiObjInfo(config, serv4, obj);
+    	String msg = objInfo.makeObject();
+		if (msg != null) return msg;
+        
+        msg = objInfo.execute();
+		if (msg != null) return msg;
+		
+        return "OK";
+    }
+    
+    //----------------------------------------------------------------------
     final String db = "/api/db";
     @PostMapping(db)
     public String dbPost(@RequestParam("obj") String obj) {
