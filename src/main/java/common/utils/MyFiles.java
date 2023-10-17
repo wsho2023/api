@@ -201,7 +201,7 @@ public class MyFiles {
 	}
 	
 	//List<List<String>>を新規作成したTSVファイルに書き込む。
-    public static int WriteList2File(ArrayList<ArrayList<String>> list, String writePath) throws IOException {
+    public static int writeList2File(ArrayList<ArrayList<String>> list, String writePath) throws IOException {
 		File file = new File(writePath);
 		FileWriter filewriter = new FileWriter(file);
     	
@@ -223,9 +223,9 @@ public class MyFiles {
     }
     
 	//List<String>を新規作成したTSVファイルに書き込む。
-    public static int WriteList2File(ArrayList<ArrayList<String>> list, String writePath, String charSet) throws IOException {
+    public static int writeList2File(ArrayList<ArrayList<String>> list, String writePath, String charSet) throws IOException {
     	if (charSet.equals("UTF-8") == true) {
-    		return WriteList2File(list, writePath);
+    		return writeList2File(list, writePath);
     	} else {
     		//文字コードを指定して書き込む
 			File file = new File(writePath);
@@ -241,7 +241,7 @@ public class MyFiles {
 				for (int c=0; c<colLen-1; c++) {
 					line = line + list.get(r).get(c) + "\t";
 				}
-				line = line + list.get(r).get(colLen-1) + "\r\n";
+				line = line + list.get(r).get(colLen-1);	// + "\r\n"
 		        bw.write(line);
 		        bw.newLine();
 			}
@@ -250,7 +250,7 @@ public class MyFiles {
     	return 0;
     }
     
-    public static int WriteData2File(ArrayList<String> list, String writePath) throws IOException {
+    public static int writeData2File(ArrayList<String> list, String writePath) throws IOException {
 		File file = new File(writePath);
 		FileWriter filewriter = new FileWriter(file);
     	
@@ -265,7 +265,7 @@ public class MyFiles {
     	return 0;
     }
     
-    public static int WriteString2File(String str, String wirtePath) throws IOException {
+    public static int writeString2File(String str, String wirtePath) throws IOException {
 		File file = new File(wirtePath);
 		FileWriter filewriter = new FileWriter(file);
 		filewriter.write(str);
@@ -284,7 +284,7 @@ public class MyFiles {
 	}
 
     //オブジェクトをJsonNode⇒Stringに変換して、ファイルへ書き込み
-	public static int WriteJson2File(Object value, String wirtePath) throws IOException {
+	public static int writeJson2File(Object value, String wirtePath) throws IOException {
 		ObjectMapper mapper = new ObjectMapper();
 		String jsonStr = null;
 		//try {

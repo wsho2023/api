@@ -38,6 +38,8 @@ public class ShukeiObjInfo {
 		colFormat = null;
 		System.out.println(sys + " obj: " + obj);
 		sendMail = new SendMail(config);
+		templePath = config.getPathTempletePath();
+		outputPath = config.getPathOutputPath();
 	}
 	
 	public String makeObject() {
@@ -64,8 +66,7 @@ public class ShukeiObjInfo {
         		{"11", "KINGAKU"},
         		{"12", "DATE"},
 	        };
-			//colFormat = new String[format.length][];
-	        //colFormat = format;
+	        
 			colFmtList = new ArrayList<String[][]>();
 			colFmtList.add(format1);
 			colFmtList.add(format2);
@@ -82,8 +83,7 @@ public class ShukeiObjInfo {
         		{"11", "KINGAKU"},
         		{"12", "DATE"},
 	        };
-			//colFormat = new String[format.length][];
-	        //colFormat = format;
+	        
 			colFmtList = new ArrayList<String[][]>();
 			colFmtList.add(format);
         } else if (obj.equals("tonyu") == true) {
@@ -94,7 +94,7 @@ public class ShukeiObjInfo {
 			objList.add("nouki1");
 			objList.add("henkou");
 			objList.add("nouki2");
-	        String[][] format = {
+	        String[][] format1 = {
         		{"1", "DATETIME"},
         		{"5", "DATE"},
         		{"9", "SURYO"},
@@ -102,13 +102,28 @@ public class ShukeiObjInfo {
         		{"11", "KINGAKU"},
         		{"12", "DATE"},
 	        };
-			//colFormat = new String[format.length][];
-			//colFormat = format;
+	        String[][] format2 = {
+        		{"5", "DATE"},
+        		{"9", "SURYO"},
+	        };
+	        String[][] format3 = {
+        		{"1", "DATETIME"},
+        		{"5", "DATE"},
+        		{"9", "SURYO"},
+        		{"10", "TANKA"},
+        		{"11", "KINGAKU"},
+        		{"12", "DATE"},
+	        };
+	        String[][] format4 = {
+        		{"5", "DATE"},
+        		{"9", "SURYO"},
+	        };
+	        
 			colFmtList = new ArrayList<String[][]>();
-			colFmtList.add(format);
-			colFmtList.add(format);
-			colFmtList.add(format);
-			colFmtList.add(format);
+			colFmtList.add(format1);
+			colFmtList.add(format2);
+			colFmtList.add(format3);
+			colFmtList.add(format4);
         } 
 		if (objName == null)
 			return "対象Object処理なし";
@@ -118,6 +133,7 @@ public class ShukeiObjInfo {
 	
 	public String execute() {
 		String msg;
+		String saveTxtPath;
     	listList = new ArrayList<ArrayList<ArrayList<String>>>();
 		for (String obj: objList) {
 			msg = getData(obj);	//データ取得
@@ -159,6 +175,7 @@ public class ShukeiObjInfo {
             os.flush();
         } catch (IOException e) {
             e.printStackTrace();
+        	return e.toString();
         }
 		
 		return null;
@@ -195,20 +212,16 @@ public class ShukeiObjInfo {
 		}
 		
 		//---------------------------------------
-		//TSVファイル読み込み
+		//TSVファイル書き出し
 		//---------------------------------------
-		/*outputPath = config.getPathOutputPath();
 		String saveTxtPath = outputPath + obj + ".tsv";
-        list = null;
 		try {
-			list = MyFiles.parseTSV(saveTxtPath, "UTF-8");	//or "SJIS"
+			MyFiles.writeList2File(list, saveTxtPath);
 		} catch (IOException e) {
 			e.printStackTrace();
-        	return e.toString();
+			return e.getMessage();
 		}
-		if (list == null) {
-			MyUtils.SystemErrPrint("抽出データなし");
-		}*/
+		
 		
 		return null;
 	}
@@ -217,8 +230,6 @@ public class ShukeiObjInfo {
 	//Excelに書き出し
 	//---------------------------------------
 	public String makeExcel() {
-		templePath = config.getPathTempletePath();
-		outputPath = config.getPathOutputPath();
         String defXlsPath = templePath + objName + "_org.xlsx";
         String tmpXlsPath = null;
 		if (MyFiles.exists(defXlsPath) != true) {

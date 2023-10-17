@@ -159,7 +159,7 @@ public class GaihiObjInfo {
 		
 		//TSVファイル書き出し(UTF-8)
 		try {
-			MyFiles.WriteList2File(list2, WRITE_PATH);
+			MyFiles.writeList2File(list2, WRITE_PATH);
 		} catch (IOException e) {
 			e.printStackTrace();
 			return e.toString();

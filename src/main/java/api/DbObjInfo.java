@@ -110,7 +110,7 @@ public class DbObjInfo {
 		//---------------------------------------
 		String saveTxtPath = config.getPathOutputPath() + obj + ".tsv";
 		try {
-			MyFiles.WriteList2File(list, saveTxtPath);
+			MyFiles.writeList2File(list, saveTxtPath);
 		} catch (IOException e) {
 			e.printStackTrace();
 			return e.getMessage();

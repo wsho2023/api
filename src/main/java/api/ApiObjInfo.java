@@ -286,7 +286,7 @@ public class ApiObjInfo {
 			if (saveCharSet.equals("SJIS") == true) {
 				//listから読み込んで、文字コード指定してファイル出力
 				try {
-					MyFiles.WriteList2File(list, saveTxtPath, saveCharSet);
+					MyFiles.writeList2File(list, saveTxtPath, saveCharSet);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
