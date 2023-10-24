@@ -4,28 +4,23 @@ import com.example.demo.SpringConfig;
 
 import common.utils.MyUtils;
 
-public class RemoteObjInfo {
-	SpringConfig config;
-	String sys;
-	String sysName;
-	String obj;
-	String objName;
+public class RemoteObjInfo extends ApiSuper {
 
 	public RemoteObjInfo(SpringConfig argConfig, String argSys, String argObj) {
-		config = argConfig;
-        sys = argSys;
+		super(argConfig, argSys, argObj);
         sysName = null;
-		obj = argObj;
 		objName = null;
 		System.out.println(sys + " obj: " + obj);
 	}
 	
+	@Override
 	public String makeObject() {
         sysName = "Remote";
         //curl -X POST http://localhost:8080/api/remote
 		return null;
 	}
 
+	@Override
 	public String execute() {
 		String[] cmdList;
 		cmdList = new String[1];

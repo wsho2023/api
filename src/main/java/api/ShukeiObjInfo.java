@@ -1,11 +1,8 @@
 package api;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.sql.SQLException;
 import java.util.ArrayList;
-
-import javax.servlet.http.HttpServletResponse;
 
 import com.example.demo.SpringConfig;
 
@@ -13,39 +10,20 @@ import common.utils.MyExcel;
 import common.utils.MyFiles;
 import common.utils.MyUtils;
 
-public class ShukeiObjInfo {
-	SpringConfig config;
-	String sys;
-	String sysName;
-	String obj;
-	String objName;
-	String[][] colFormat;
-	ArrayList<ArrayList<String>> list = null;
-	String templePath;
-	String outputPath;
-    String saveXlsPath;
-    SendMail sendMail;
+public class ShukeiObjInfo extends ApiSuper {
 	ArrayList<String> objList;
 	ArrayList<ArrayList<ArrayList<String>>> listList;	//ArrayList<ArrayList<String>> x n個
 	ArrayList<String[][]> colFmtList;
 	
 	public ShukeiObjInfo(SpringConfig argConfig, String argSys, String argObj) {
-		config = argConfig;
-        sys = argSys;
-        sysName = null;
-		obj = argObj;
-		objName = null;
-		colFormat = null;
-		System.out.println(sys + " obj: " + obj);
-		sendMail = new SendMail(config);
-		templePath = config.getPathTempletePath();
-		outputPath = config.getPathOutputPath();
+		super(argConfig, argSys, argObj);
 	}
 	
+	@Override
 	public String makeObject() {
         sysName = "システム";
         if (obj.equals("jisseki") == true) {
-			//curl -X POST "http://localhost:8080/shukei?obj=jisseki"
+			//curl -X POST "http://localhost:8080/api/shukei?obj=jisseki"
 			objName = obj;
 			objList = new ArrayList<String>();
 			objList.add("jisseki1");
@@ -71,7 +49,7 @@ public class ShukeiObjInfo {
 			colFmtList.add(format1);
 			colFmtList.add(format2);
         } else if (obj.equals("meisai") == true) {
-			//curl -X POST "http://localhost:8080/shukei?obj=meisai"
+			//curl -X POST "http://localhost:8080/api/shukei?obj=meisai"
 			objName = obj;
 			objList = new ArrayList<String>();
 			objList.add(obj);
@@ -87,7 +65,7 @@ public class ShukeiObjInfo {
 			colFmtList = new ArrayList<String[][]>();
 			colFmtList.add(format);
         } else if (obj.equals("tonyu") == true) {
-			//curl -X POST "http://localhost:8080/shukei?obj=tonyu"
+			//curl -X POST "http://localhost:8080/api/shukei?obj=tonyu"
 			objName = "tonyu";
 			objList = new ArrayList<String>();
 			objList.add("shinki");
@@ -131,9 +109,9 @@ public class ShukeiObjInfo {
 		return null;
 	}
 	
+	@Override
 	public String execute() {
 		String msg;
-		String saveTxtPath;
     	listList = new ArrayList<ArrayList<ArrayList<String>>>();
 		for (String obj: objList) {
 			msg = getData(obj);	//データ取得
@@ -151,7 +129,8 @@ public class ShukeiObjInfo {
 		return null;
 	}
 	
-	public String download(HttpServletResponse response) {
+	@Override
+	public String download(String[] filePath) {
 		String msg;
     	listList = new ArrayList<ArrayList<ArrayList<String>>>();
 		for (String obj: objList) {
@@ -164,26 +143,14 @@ public class ShukeiObjInfo {
 		msg = makeExcel();			//Excelに書き出し
 		if (msg != null) return msg;
 		
-        try (OutputStream os = response.getOutputStream();) {
-        	String fileName = MyFiles.getFileName(saveXlsPath);
-            byte[] fb = MyFiles.readAllBytes(saveXlsPath);
-            
-            response.setContentType("application/octet-stream");
-            response.setHeader("Content-Disposition", "attachment; filename=" + fileName);
-            response.setContentLength(fb.length);
-            os.write(fb);
-            os.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        	return e.toString();
-        }
-		
+		filePath[0] = saveXlsPath;	//参照のコピー
 		return null;
 	}
 	
 	//---------------------------------------
 	//データ取得
 	//---------------------------------------
+	@Override
 	public String getData(String obj) {
 		//---------------------------------------
 		//SQL取得
@@ -229,6 +196,7 @@ public class ShukeiObjInfo {
 	//---------------------------------------
 	//Excelに書き出し
 	//---------------------------------------
+	@Override
 	public String makeExcel() {
         String defXlsPath = templePath + objName + "_org.xlsx";
         String tmpXlsPath = null;
@@ -278,8 +246,7 @@ public class ShukeiObjInfo {
 	public String sendMail() {
 		String mailBody = "";
 		String subject = "[" + sysName + "]連絡(" + objName + " " + MyUtils.getDate() + ")";
-		sendMail.execute(subject, mailBody, saveXlsPath);
 		
-		return null;
+		return super.sendMail(subject, mailBody, saveXlsPath);
 	}
 }

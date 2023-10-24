@@ -1,5 +1,8 @@
 package com.example.demo;
 
+import java.io.IOException;
+import java.io.OutputStream;
+
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +17,7 @@ import api.DbObjInfo;
 import api.GaihiObjInfo;
 import api.RemoteObjInfo;
 import api.ShukeiObjInfo;
+import common.utils.MyFiles;
 
 @RestController
 public class ApiController {
@@ -23,7 +27,7 @@ public class ApiController {
 
     //----------------------------------------------------------------------
 	final String serv1 = "/api/kkk";
-    @PostMapping(serv1)
+    @GetMapping(serv1)
     public String serv1Post(@RequestParam("obj") String obj) {
     //----------------------------------------------------------------------
     	ApiObjInfo objInfo = new ApiObjInfo(config, serv1, obj);
@@ -38,7 +42,7 @@ public class ApiController {
     
     //----------------------------------------------------------------------
 	final String serv2 = "/api/hantei";
-    @PostMapping(serv2)
+	@GetMapping(serv2)
     public String serv2Post(@RequestParam("obj") String obj) {
     //----------------------------------------------------------------------
     	ApiObjInfo objInfo = new ApiObjInfo(config, serv2, obj);
@@ -53,7 +57,7 @@ public class ApiController {
     
     //----------------------------------------------------------------------
 	final String serv3 = "/api/kyaku";
-    @PostMapping(serv3)
+	@GetMapping(serv3)
     public String serv3Post(@RequestParam("obj") String obj) {
     //----------------------------------------------------------------------
     	ApiObjInfo objInfo = new ApiObjInfo(config, serv3, obj);
@@ -68,7 +72,7 @@ public class ApiController {
     
     //----------------------------------------------------------------------
 	final String serv4 = "/api/jisseki";
-    @PostMapping(serv4)
+	@GetMapping(serv4)
     public String serv4Post(@RequestParam("obj") String obj) {
     //----------------------------------------------------------------------
     	ApiObjInfo objInfo = new ApiObjInfo(config, serv4, obj);
@@ -83,7 +87,7 @@ public class ApiController {
     
     //----------------------------------------------------------------------
     final String db = "/api/db";
-    @PostMapping(db)
+    @GetMapping(db)
     public String dbPost(@RequestParam("obj") String obj) {
     //----------------------------------------------------------------------
         DbObjInfo objInfo = new DbObjInfo(config, db, obj);
@@ -98,7 +102,7 @@ public class ApiController {
     
     //----------------------------------------------------------------------
     final String shukei = "/api/shukei";
-    @PostMapping(shukei)
+    @GetMapping(shukei)
     public String shukeiPost(@RequestParam("obj") String obj) {
     //----------------------------------------------------------------------
     	ShukeiObjInfo objInfo = new ShukeiObjInfo(config, shukei, obj);
@@ -112,15 +116,30 @@ public class ApiController {
     }
     
     //----------------------------------------------------------------------
-    @GetMapping(shukei)
+    @GetMapping(shukei+"2")
     public String shukeiGet(HttpServletResponse response, @RequestParam("obj") String obj) {
     //----------------------------------------------------------------------
     	ShukeiObjInfo objInfo = new ShukeiObjInfo(config, shukei, obj);
     	String msg = objInfo.makeObject();
 		if (msg != null) return msg;
         
-        msg = objInfo.download(response);
+		String[] filePath = new String[1]; 
+        msg = objInfo.download(filePath);
 		if (msg != null) return msg;
+		
+        try (OutputStream os = response.getOutputStream();) {
+        	String fileName = MyFiles.getFileName(filePath[0]);
+            byte[] fb = MyFiles.readAllBytes(filePath[0]);
+            
+            response.setContentType("application/octet-stream");
+            response.setHeader("Content-Disposition", "attachment; filename=" + fileName);
+            response.setContentLength(fb.length);
+            os.write(fb);
+            os.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        	return e.toString();
+        }
 		
         return "OK";
     }

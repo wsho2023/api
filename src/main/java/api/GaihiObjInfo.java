@@ -9,19 +9,7 @@ import common.utils.MyExcel;
 import common.utils.MyFiles;
 import common.utils.MyUtils;
 
-public class GaihiObjInfo {
-	SpringConfig config;
-	String sys;
-	String sysName;
-	String obj;
-	String objName;
-	String[][] colFormat;
-	ArrayList<ArrayList<String>> list = null;
-	String templePath;
-	String outputPath;
-    String saveXlsPath;
-    SendMail sendMail;
-    
+public class GaihiObjInfo extends ApiSuper {
 	String CONNECT_INFO;
 	String TABLE_NAME;
 	String TARGET_PATH; 
@@ -34,14 +22,11 @@ public class GaihiObjInfo {
 	String COPY_BAT_PATH;  
 	
 	public GaihiObjInfo(SpringConfig argConfig, String argSys, String argObj) {
-		config = argConfig;
-        sys = argSys;
+		super(argConfig, argSys, argObj);
         sysName = null;
-		obj = argObj;
 		objName = null;
 		colFormat = null;
 		System.out.println(sys + " obj: " + obj);
-		sendMail = new SendMail(config);
 		
 		CONNECT_INFO = "scsales@sacles@orcl";
 		TABLE_NAME = "GAIHI_HASHIN_TRN";
@@ -54,6 +39,7 @@ public class GaihiObjInfo {
 		FTP_BAT_PATH = "gaihi_ftp.bat";  
 	}
 	
+	@Override
 	public String makeObject() {
         sysName = "Gaihi";
         //curl -X POST http://localhost:8080/api/gaihi
@@ -70,6 +56,7 @@ public class GaihiObjInfo {
 	⑦listに格納をExcelマスタ末尾に書き込み
 	⑧そのExcelマスタをサーバーへコピー
 */
+	@Override
 	public String execute() {
 		String[] cmdList;
 		//---------------------------------------

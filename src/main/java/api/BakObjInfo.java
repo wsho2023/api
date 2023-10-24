@@ -1,37 +1,22 @@
 package api;
 
-import java.util.ArrayList;
-
 import com.example.demo.SpringConfig;
 
 import common.backup.ScanBackupFile;
 import common.utils.MyUtils;
 
-public class BakObjInfo {
-	SpringConfig config;
-	String sys;
-	String sysName;
-	String obj;
-	String objName;
-	String[][] colFormat;
-	ArrayList<ArrayList<String>> list = null;
-	String templePath;
-	String outputPath;
-    String saveXlsPath;
-    SendMail sendMail;
-    ScanBackupFile backup;
+public class BakObjInfo extends ApiSuper {
+	ScanBackupFile backup;
 	
 	public BakObjInfo(SpringConfig argConfig, String argSys, String argObj) {
-		config = argConfig;
-        sys = argSys;
+		super(argConfig, argSys, argObj);
         sysName = null;
-		obj = argObj;
 		objName = null;
 		colFormat = null;
 		System.out.println(sys + " obj: " + obj);
-		sendMail = new SendMail(config);
 	}
 	
+	@Override
 	public String makeObject() {
 		String targetPath = "";
 		String backupPath = "";
@@ -59,6 +44,7 @@ public class BakObjInfo {
 		return null;
 	}
 	
+	@Override
 	public String execute() {
         String msg = run();		//Backup実行
 		if (msg != null) return msg;
@@ -84,6 +70,7 @@ public class BakObjInfo {
 	//---------------------------------------
 	//Excelに書き出し
 	//---------------------------------------
+	@Override
 	public String makeExcel() {
 		saveXlsPath = "";
 		
@@ -96,8 +83,7 @@ public class BakObjInfo {
 	public String sendMail() {
 		String mailBody = "";
 		String subject = "[" + sysName + "]連絡(" + objName + " " + MyUtils.getDate() + ")";
-		sendMail.execute(subject, mailBody, saveXlsPath);
 		
-		return null;
+		return super.sendMail(subject, mailBody, saveXlsPath);
 	}
 }

@@ -1,12 +1,9 @@
 package api;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
-
-import javax.servlet.http.HttpServletResponse;
 
 import com.example.demo.SpringConfig;
 
@@ -15,39 +12,20 @@ import common.utils.MyFiles;
 import common.utils.MyUtils;
 import common.utils.WebApi;
 
-public class ApiObjInfo {
+public class ApiObjInfo extends ApiSuper {
 	final String serv1 = "/api/kkk";
 	final String serv2 = "/api/hantei";
 	final String serv3 = "/api/kyaku";
 	final String serv4 = "/api/jisskei";
-	
-	SpringConfig config;
-	String sys;
-	String sysName;
-	String obj;
-	String objName;
-	String[][] colFormat;
-	ArrayList<ArrayList<String>> list = null;
-	String templePath;
-	String outputPath;
-    String saveXlsPath;
-    String saveCharSet;
-    SendMail sendMail;
 	String url;
 	int dlFlag;
 	boolean attachFlag;
 	
 	public ApiObjInfo(SpringConfig argConfig, String argSys, String argObj) {
-		config = argConfig;
-        sys = argSys;
-        sysName = null;
-		obj = argObj;
-		objName = null;
-		colFormat = null;
-		System.out.println(sys + " obj: " + obj);
-		sendMail = new SendMail(config);
+		super(argConfig, argSys, argObj);
 	}
 	
+	@Override
 	public String makeObject() {
 		String beseUrl = "";
 		String fields = "";
@@ -202,6 +180,7 @@ public class ApiObjInfo {
 		return list2;
 	}
 	
+	@Override
 	public String execute() {
 		String msg;
 		msg = getData(obj);			//データ取得
@@ -219,7 +198,8 @@ public class ApiObjInfo {
 		return null;
 	}
 	
-	public String download(HttpServletResponse response) {
+	@Override
+	public String download(String[] filePath) {
 		String msg;
 		msg = getData(obj);	//データ取得
 		if (msg != null) return msg;
@@ -227,25 +207,14 @@ public class ApiObjInfo {
 		msg = makeExcel();			//Excelに書き出し
 		if (msg != null) return msg;
 		
-        try (OutputStream os = response.getOutputStream();) {
-        	String fileName = MyFiles.getFileName(saveXlsPath);
-            byte[] fb = MyFiles.readAllBytes(saveXlsPath);
-            
-            response.setContentType("application/octet-stream");
-            response.setHeader("Content-Disposition", "attachment; filename=" + fileName);
-            response.setContentLength(fb.length);
-            os.write(fb);
-            os.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-		
+		filePath[0] = saveXlsPath;	//参照のコピー
 		return null;
 	}
 	
 	//---------------------------------------
 	//データ取得
 	//---------------------------------------
+	@Override
 	public String getData(String obj) {
 		outputPath = config.getPathOutputPath();
 		String saveTxtPath = outputPath + obj + ".tsv";
@@ -302,10 +271,11 @@ public class ApiObjInfo {
 	//---------------------------------------
 	//Excelに書き出し
 	//---------------------------------------
+	@Override
 	public String makeExcel() {
 		if (list.size() < 2) {
 			String msg = "抽出データなし";
-			MyUtils.SystemErrPrint(obj);
+			MyUtils.SystemErrPrint(msg);
 			return null;
 		}
 		templePath = config.getPathTempletePath();
@@ -369,9 +339,8 @@ public class ApiObjInfo {
 		}
 		
 		String subject = "[" + sysName + "]通知(" + objName + " " + MyUtils.getDate() + ")";
-		sendMail.execute(subject, mailBody, saveXlsPath);
 		
-		return null;
+		return super.sendMail(subject, mailBody, saveXlsPath);
 	}
 	
     public String getGroupShukei(ArrayList<ArrayList<String>> list) {

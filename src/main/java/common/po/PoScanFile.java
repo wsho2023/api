@@ -3,6 +3,8 @@ package common.po;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
+import java.util.Arrays;
+import java.util.Comparator;
 
 import com.example.demo.SpringConfig;
 
@@ -37,8 +39,7 @@ public class PoScanFile {
 	
 	public void scanRemainedFile() {
 		//指定ディレクトリ配下のファイルのみ(またはディレクトリのみ)を取得
-        File file = new File(this.targetPath);
-        File fileArray[] = file.listFiles();
+		File fileArray[] = sortedFiles(this.targetPath);
 		//MyUtils.SystemLogPrint("■scanRemainedFile: start..." + this.targetPath);
 		try {
 			for (File f: fileArray){
@@ -54,6 +55,18 @@ public class PoScanFile {
 		//MyUtils.SystemLogPrint("■scanRemainedFile: end");
 	}
 	
+	//ファイル日時時系列でソートしてリストアップ		//https://teratail.com/questions/107345
+    private File[] sortedFiles(String path) {
+        File dir = new File(path);
+        File fileArray[] = dir.listFiles();
+        Arrays.sort(fileArray, new Comparator<File>() {
+            public int compare(File file1, File file2) {
+                return file1.lastModified() >= file2.lastModified() ? 1 : -1;
+            }
+        });
+        return fileArray;
+    }
+    
 	public void scanProcess(String uploadFilePath) {
 		MyUtils.SystemLogPrint("■scanProcess: start... 取込開始");
 		//importData(uploadFilePath);
@@ -139,17 +152,18 @@ public class PoScanFile {
         //------------------------------------------------------
         //ERRL登録処理
         //------------------------------------------------------
+		String subject = ocrData.getDocSetName() + "注文書" + "(" + ocrData.getCreatedAt() + " " + ocrData.getUnitName() + ")";
 		String chubanlist = ocrData.getChubanlist();
 		String chubanlistMsg = "注文番号(PO)\n" + chubanlist;
 		chubanlist = chubanlist.replace("\n", " ");
     	PoErrlBean errl = new PoErrlBean();
-    	errl.setErrlData(ocrData.getUnitId(), null, ocrData.getDocSetName(), ocrData.getUnitName(), chubanlist);
-    	PoErrlDAO.getInstance(config).insertDB(errl);		
+    	errl.setErrlData("OCR"+ocrData.getUnitId(), ocrData.getDocSetName(), ocrData.getUnitName(), chubanlist, subject, 0, pdfPath);
+    	PoErrlDAO.getInstance(config).insertDB(errl);
 		
 		//メール送信第2弾
 		//本文に ocrData.getChubanlist()
 		//sendScanMail(ocrData.getDocSetName());
-
+    	
 		MyUtils.SystemLogPrint("sendMailProcess: end");
 	}
 

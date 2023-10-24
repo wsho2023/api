@@ -2,37 +2,19 @@ package api;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
 
 import com.example.demo.SpringConfig;
 
 import common.utils.MyFiles;
 import common.utils.MyUtils;
 
-public class DbObjInfo {
-	SpringConfig config;
-	String sys;
-	String sysName;
-	String obj;
-	String objName;
-	String[][] colFormat;
-	ArrayList<ArrayList<String>> list = null;
-	String templePath;
-	String outputPath;
-    String saveXlsPath;
-    SendMail sendMail;
+public class DbObjInfo extends ApiSuper {
 	
 	public DbObjInfo(SpringConfig argConfig, String argSys, String argObj) {
-		config = argConfig;
-        sys = argSys;
-        sysName = null;
-		obj = argObj;
-		objName = null;
-		colFormat = null;
-		System.out.println(sys + " obj: " + obj);
-		sendMail = new SendMail(config);
+		super(argConfig, argSys, argObj);
 	}
 	
+	@Override
 	public String makeObject() {
         sysName = "システム";
         if (obj.equals("juchu") == true) {
@@ -61,6 +43,7 @@ public class DbObjInfo {
 		return null;
 	}
 	
+	@Override
 	public String execute() {
 		String msg;
         msg = getData(obj);//データ取得
@@ -78,11 +61,12 @@ public class DbObjInfo {
 	//---------------------------------------
 	//データ取得
 	//---------------------------------------
+	@Override
 	public String getData(String obj) {
 		//---------------------------------------
 		//SQL取得
 		//---------------------------------------
-		String sqlPath =  config.getPathTempletePath() + obj + ".sql";
+		String sqlPath =  templePath + obj + ".sql";
 		String sql = "";
 		try {
 			sql = MyFiles.readAllText(sqlPath);
@@ -108,9 +92,9 @@ public class DbObjInfo {
 		//---------------------------------------
 		//TSVファイル書き出し
 		//---------------------------------------
-		String saveTxtPath = config.getPathOutputPath() + obj + ".tsv";
+		String saveTxtPath = outputPath + obj + ".tsv";
 		try {
-			MyFiles.writeList2File(list, saveTxtPath);
+			MyFiles.writeList2File(list, saveTxtPath, "UTF-8");	//UTF-8 or SJIS
 		} catch (IOException e) {
 			e.printStackTrace();
 			return e.getMessage();
@@ -162,6 +146,7 @@ public class DbObjInfo {
 	//---------------------------------------
 	//Excelに書き出し
 	//---------------------------------------
+	@Override
 	public String makeExcel() {
 		saveXlsPath = "";
 		
@@ -174,8 +159,7 @@ public class DbObjInfo {
 	public String sendMail() {
 		String mailBody = "";
 		String subject = "[" + sysName + "]連絡(" + objName + " " + MyUtils.getDate() + ")";
-		sendMail.execute(subject, mailBody, saveXlsPath);
 		
-		return null;
+		return super.sendMail(subject, mailBody, saveXlsPath);
 	}
 }
