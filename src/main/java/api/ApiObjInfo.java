@@ -164,7 +164,7 @@ public class ApiObjInfo extends ApiSuper {
 	}
 	
 	//末尾Nカラムカット 
-	private ArrayList<ArrayList<String>> convAarryColumns(ArrayList<ArrayList<String>> list1) {
+	/*private ArrayList<ArrayList<String>> convAarryColumns(ArrayList<ArrayList<String>> list1) {
 		ArrayList<ArrayList<String>> list2 = new ArrayList<ArrayList<String>>();
 		ArrayList<String> data;
 		int rowLen = list1.size();
@@ -178,7 +178,7 @@ public class ApiObjInfo extends ApiSuper {
 			list2.add(data);
 		}
 		return list2;
-	}
+	}*/
 	
 	@Override
 	public String execute() {

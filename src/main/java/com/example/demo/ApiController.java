@@ -21,7 +21,6 @@ import common.utils.MyFiles;
 
 @RestController
 public class ApiController {
-
     @Autowired
     private SpringConfig config;
 
@@ -127,21 +126,7 @@ public class ApiController {
         msg = objInfo.download(filePath);
 		if (msg != null) return msg;
 		
-        try (OutputStream os = response.getOutputStream();) {
-        	String fileName = MyFiles.getFileName(filePath[0]);
-            byte[] fb = MyFiles.readAllBytes(filePath[0]);
-            
-            response.setContentType("application/octet-stream");
-            response.setHeader("Content-Disposition", "attachment; filename=" + fileName);
-            response.setContentLength(fb.length);
-            os.write(fb);
-            os.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        	return e.toString();
-        }
-		
-        return "OK";
+        return filedownload(response, filePath[0]);
     }
     
     //----------------------------------------------------------------------
@@ -218,4 +203,23 @@ public class ApiController {
 			e.printStackTrace();
 		}	
     }*/    
+    
+    private String filedownload(HttpServletResponse response, String filePath) {
+    	
+        try (OutputStream os = response.getOutputStream();) {
+        	String fileName = MyFiles.getFileName(filePath);
+            byte[] fb = MyFiles.readAllBytes(filePath);
+            
+            response.setContentType("application/octet-stream");
+            response.setHeader("Content-Disposition", "attachment; filename=" + fileName);
+            response.setContentLength(fb.length);
+            os.write(fb);
+            os.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        	return e.toString();
+        }
+		
+        return "OK";
+    }    
 }

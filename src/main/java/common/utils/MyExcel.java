@@ -38,7 +38,6 @@ public class MyExcel {
 	
 	public Workbook book;
     FileInputStream fi;
-	//public Sheet sheet;
 	public XSSFSheet sheet;
 	public Row row;
 	public Cell cell;
@@ -592,6 +591,7 @@ public class MyExcel {
 		return 0;
 	}
 	
+	//Pivotテーブルを更新する
 	//https://stackoverflow.com/questions/1010673/refresh-pivot-table-with-apache-poi
 	public int refreshPivot(String sheetName) {
 	    final var pivotSheet = (XSSFSheet) book.getSheet(sheetName);
@@ -610,5 +610,21 @@ public class MyExcel {
 		}
 		
 		return 0;
+	}
+
+	//Excelシートをアクティブにする
+	//https://blog.java-reference.com/poi-sheet-active/
+	public void setActiveSheet(String pivotName) {
+		//xlsx.book.setActiveSheet(0);  //シートを選択状態にする
+		//xlsx.book.setSelectedTab(0);  //シートをカレントにする
+		//シート名で指定したい場合はこちら
+		book.setSelectedTab(book.getSheetIndex(pivotName));
+		book.setActiveSheet(book.getSheetIndex(pivotName));
+		
+		setSheet("pivot");
+		getRow(0);
+		setAsActiveCell(0);
+		//String value = getStringCellValue(0,0);
+		//System.out.println(value);
 	}
 }

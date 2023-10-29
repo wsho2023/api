@@ -225,7 +225,10 @@ public class ShukeiObjInfo extends ApiSuper {
 				xlsx.writeData(objList.get(i), list, true);
 				i++;
 			}
-			xlsx.refreshPivot("pivot");
+			String pivotName = "pivot";
+			xlsx.refreshPivot(pivotName);
+			xlsx.setActiveSheet(pivotName);
+			
 			//Excelファイル保存
 			//saveXlsPath = outputPath + objName + "_" + MyUtils.getDateStr() +".xlsx";
 			saveXlsPath = outputPath + objName + ".xlsx";
