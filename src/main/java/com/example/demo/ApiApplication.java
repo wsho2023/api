@@ -33,9 +33,9 @@ public class ApiApplication extends SpringBootServletInitializer {
 				 + "Output path: " + config.getPathOutputPath();
 		System.out.println(mailBody);
 		
+		String toAddr = "test1@gmail.com";
 		MyMail mailConf = new MyMail(
-				config, "test1@test.com", "", "execStartup", null, mailBody+"\n");	//config.getMailUsername()
+				config, toAddr, "", "execStartup", null, mailBody+"\n");	//config.getMailUsername()
         mailConf.sendMailThread();
-		
 	}
 }

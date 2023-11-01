@@ -62,9 +62,8 @@ public class BakObjInfo extends ApiSuper {
 	//Backup実行
 	//---------------------------------------
 	public String run() {
-    	backup.run();
-    	
-		return null;
+		
+		return backup.run();
 	}
 	
 	//---------------------------------------

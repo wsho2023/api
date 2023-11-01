@@ -52,6 +52,11 @@ public class MyUtils {
 		return sdf2.format(new Date());
 	}
 	
+	public static String getDateStr2() {
+		SimpleDateFormat sdf2 = new SimpleDateFormat("yyyyMMdd");
+		return sdf2.format(new Date());
+	}
+	
 	//コマンド実行
 	public static void exeCmd(String[] cmdList) throws IOException, InterruptedException {
 		//https://blog.goo.ne.jp/xmldtp/e/beb03fb01fb1d1a2c37db8d69b43dcdd

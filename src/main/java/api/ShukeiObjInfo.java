@@ -49,7 +49,7 @@ public class ShukeiObjInfo extends ApiSuper {
 			colFmtList.add(format1);
 			colFmtList.add(format2);
         } else if (obj.equals("meisai") == true) {
-			//curl -X POST "http://localhost:8080/api/shukei?obj=meisai"
+			//curl -X GET "http://localhost:8080/api/shukei?obj=meisai"
 			objName = obj;
 			objList = new ArrayList<String>();
 			objList.add(obj);
@@ -230,17 +230,40 @@ public class ShukeiObjInfo extends ApiSuper {
 			xlsx.setActiveSheet(pivotName);
 			
 			//Excelファイル保存
-			//saveXlsPath = outputPath + objName + "_" + MyUtils.getDateStr() +".xlsx";
-			saveXlsPath = outputPath + objName + ".xlsx";
+			saveXlsPath = outputPath + objName + "_" + MyUtils.getDateStr2() +".xlsx";
 			MyUtils.SystemLogPrint("  XLSXファイル保存: " + saveXlsPath);
 			xlsx.save(saveXlsPath);
 			xlsx.close();
+			excelSave(saveXlsPath);
 		} catch (IOException e) {
 			e.printStackTrace();
 			return e.toString();
 		}
 		
 		return null;
+	}
+	
+	private void excelSave(String filePath) {
+		MyUtils.SystemLogPrint("■excelSave: start...");
+		//importData(uploadFilePath);
+	    //------------------------------------------------------
+	    //取り込み実行
+	    //------------------------------------------------------
+		//https://blog.goo.ne.jp/xmldtp/e/beb03fb01fb1d1a2c37db8d69b43dcdd
+		//コマンドラインから****.vbsを呼び出せる。
+		String[] cmdList = new String[3];
+		cmdList[0]	=	"cscript";
+		cmdList[1]	=	"excelSave.vbs";		//VBSファイル指定
+		cmdList[2]	=	"/filePath:" + filePath;
+		try {
+		    MyUtils.exeCmd(cmdList);
+		} catch (IOException e) {
+			e.printStackTrace();
+			return;
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+			return;
+		}
 	}
 	
 	//---------------------------------------

@@ -49,3 +49,5 @@ gradlew.bat
 settings.gradle
 templete/*
 output/*
+*.bat
+*.jar
